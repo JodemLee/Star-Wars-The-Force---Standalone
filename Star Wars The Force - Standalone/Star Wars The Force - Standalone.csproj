@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{F0C92FB3-6021-4D88-9CF7-0CF50EDFCCA6}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>TheForce_Standalone</RootNamespace>
+    <AssemblyName>Star Wars The Force - Standalone</AssemblyName>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <Deterministic>true</Deterministic>
+    <langVersion>Latest</langVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>L:\SteamLibrary\steamapps\common\RimWorld\Mods\The Force- Standalone\1.6\Assemblies\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>embedded</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Alignment\Alignment Extensions.cs" />
+    <Compile Include="Apprenticeship\Gizmo_Apprentice.cs" />
+    <Compile Include="Apprenticeship\Hediff_Apprentice.cs" />
+    <Compile Include="Apprenticeship\Hediff_Master.cs" />
+    <Compile Include="Apprenticeship\InteractionWorker_TeachApprentice.cs" />
+    <Compile Include="Apprenticeship\Master_Apprentice.cs" />
+    <Compile Include="Apprenticeship\PawnGroupKindWorker_MasterApprentice_Normal.cs" />
+    <Compile Include="Apprenticeship\PawnRelationDefs.cs" />
+    <Compile Include="Apprenticeship\Ritual\LordJob_Joinable_Class.cs" />
+    <Compile Include="Apprenticeship\Ritual\RitualBehaviorWorker_GiveLecture.cs" />
+    <Compile Include="Apprenticeship\Ritual\RitualOutcomeComp_ForceLevelScaled.cs" />
+    <Compile Include="Apprenticeship\Ritual\RitualOutcomeEffectWorker_Lecture.cs" />
+    <Compile Include="Apprenticeship\Ritual\RitualStage_SelectedTarget.cs" />
+    <Compile Include="Darkside\CompAbilityEffect_SummonPhantom.cs" />
+    <Compile Include="Darkside\Mechu-Deru\CompAbilityEffect_MechOverride .cs" />
+    <Compile Include="Darkside\Mechu-Deru\CompAbilityEffect_MechuFlare.cs" />
+    <Compile Include="Darkside\Mechu-Deru\CompAbilityEffect_MechuReconste.cs" />
+    <Compile Include="Darkside\Mechu-Deru\CompAbilityEffect_MechuTek.cs" />
+    <Compile Include="Darkside\Mechu-Deru\CompAbilityEffect_MechuTether.cs" />
+    <Compile Include="Darkside\Mechu-Deru\CompAbilityEffect_MechuTransmutation.cs" />
+    <Compile Include="Darkside\Mechu-Deru\CompAbilityEffect_MechuTune.cs" />
+    <Compile Include="Darkside\Mechu-Deru\CompAbilityEffect_MechuTurret.cs" />
+    <Compile Include="Darkside\Mechu-Deru\CompAbilityEffect_Mechu_Aegis.cs" />
+    <Compile Include="Darkside\Mechu-Deru\CompAbilityEffect_Mechu_FluxInfusis.cs" />
+    <Compile Include="Darkside\Mechu-Deru\CompAbilityEffect_Mechu_TekRok.cs" />
+    <Compile Include="Darkside\Mechu-Deru\HediffComp_MechOverride.cs" />
+    <Compile Include="Darkside\Mechu-Deru\HediffComp_MechuDeru.cs" />
+    <Compile Include="Darkside\Mechu-Deru\HediffComp_MechuFlare.cs" />
+    <Compile Include="Darkside\Mechu-Deru\PowerNetUtilities.cs" />
+    <Compile Include="Darkside\Mind Control Jobs\JobDriver_BlindSelf.cs" />
+    <Compile Include="Darkside\Mind Control Jobs\JobDriver_RemoveBodyPart.cs" />
+    <Compile Include="Darkside\Mind Control Jobs\JobDriver_RemoveHeart.cs" />
+    <Compile Include="Darkside\Mind Control Jobs\JobDriver_SelfIgnite.cs" />
+    <Compile Include="Darkside\SithSorcery\CompAbilityEffect_CraftSithArtifact .cs" />
+    <Compile Include="Darkside\SithSorcery\CompAbilityEffect_DarkLightningChain.cs" />
+    <Compile Include="Darkside\SithSorcery\CompAbilityEffect_SithDrainKnowledge.cs" />
+    <Compile Include="Darkside\SithSorcery\CompAbilityEffect_SithLightningStrike.cs" />
+    <Compile Include="Darkside\SithSorcery\CompAbilityEffect_SithResurrection.cs" />
+    <Compile Include="Darkside\SithSorcery\CompAbilityEffect_SithRitualDrainEssence.cs" />
+    <Compile Include="Darkside\SithSorcery\CompAbilityEffect_SithSummon.cs" />
+    <Compile Include="Darkside\SithSorcery\CompAbilityEffect_SpawnStatueOfPawn.cs" />
+    <Compile Include="Darkside\SithSorcery\CompAbilityEffect_SummonWraith.cs" />
+    <Compile Include="Darkside\SithSorcery\CompStatueWithContainer.cs" />
+    <Compile Include="Darkside\SithSorcery\Comp_RandomAnimalAppearance.cs" />
+    <Compile Include="Darkside\SithSorcery\Dialog_SelectAnimalAppearance.cs" />
+    <Compile Include="Darkside\SithSorcery\SithLightningEvent.cs" />
+    <Compile Include="DefCultureExtension.cs" />
+    <Compile Include="Dialog_AlignmentActions.cs" />
+    <Compile Include="ForceSensitivityUtils.cs" />
+    <Compile Include="ForceUserAbilities.cs" />
+    <Compile Include="ForceUserAlignment.cs" />
+    <Compile Include="ForceUserGhostMechanics.cs" />
+    <Compile Include="ForceUserGizmo.cs" />
+    <Compile Include="ForceUserLeveling.cs" />
+    <Compile Include="ForceUserLimbs.cs" />
+    <Compile Include="Generic\CompAbilityEffect_GiveMentalState.cs" />
+    <Compile Include="Generic\CompAbilityEffect_MindTrick.cs" />
+    <Compile Include="Generic\CompAbilityEffect_OnlyTargetAllies.cs" />
+    <Compile Include="Generic\CompAbilityEffect_OnlyTargetSelf.cs" />
+    <Compile Include="Generic\CompAbilityEffect_RotatableWallraise.cs" />
+    <Compile Include="Generic\CompAbilityEffect_Stun.cs" />
+    <Compile Include="Generic\CompAbilityEffect_WithParentDuration.cs" />
+    <Compile Include="CompClass_ForceUser.cs" />
+    <Compile Include="Generic\CompProperties_AbilityWithStat.cs" />
+    <Compile Include="Generic\CompAbilityEffect_ForcePower.cs" />
+    <Compile Include="Darkside\CompAbilityEffect_ForceDestruction.cs" />
+    <Compile Include="Darkside\CompAbilityEffect_ForceHatred.cs" />
+    <Compile Include="Darkside\CompAbilityEffect_EssenceTransfer.cs" />
+    <Compile Include="Dialog_ForceAbilities.cs" />
+    <Compile Include="ForceAttunement.cs" />
+    <Compile Include="Force_ModSettings.cs" />
+    <Compile Include="Generic\CompAbilityEffect_ExplosionWithDirection.cs" />
+    <Compile Include="Generic\ForceAbilityDefExtension.cs" />
+    <Compile Include="Generic\ForceGhostUtility.cs" />
+    <Compile Include="Generic\ModExtension_FactionExtension.cs" />
+    <Compile Include="Generic\ModExtension_TechHediffExtension.cs" />
+    <Compile Include="Generic\ModExtension_TraitChances.cs" />
+    <Compile Include="Generic\PawnCloningUtility.cs" />
+    <Compile Include="Generic\Recipe_MidichlorianTest.cs" />
+    <Compile Include="GizmoUtils.cs" />
+    <Compile Include="HarmonyPatches\Darkside_HarmonyPatch.cs" />
+    <Compile Include="HarmonyPatches\ForceGhost_HarmonyPatch.cs" />
+    <Compile Include="HarmonyPatches\HarmonyPatch.cs" />
+    <Compile Include="HarmonyPatches\Meditation_HarmonyPatch.cs" />
+    <Compile Include="HarmonyPatches\PawnPatches.cs" />
+    <Compile Include="HediffComps\HediffComp_Aura.cs" />
+    <Compile Include="HediffComps\HediffComp_ChanneledAbility.cs" />
+    <Compile Include="HediffComps\HediffComp_Enlighten.cs" />
+    <Compile Include="HediffComps\HediffComp_LinkWithEffect.cs" />
+    <Compile Include="HediffComps\HediffComp_Regeneration.cs" />
+    <Compile Include="HediffComps\HediffComp_Shield.cs" />
+    <Compile Include="HediffComps\HediffComp_Vanish.cs" />
+    <Compile Include="HediffComps\Hediff_ForceReplacement.cs" />
+    <Compile Include="Lightside\CompAbilityEffect_ForceBond.cs" />
+    <Compile Include="Lightside\CompAbilityEffect_ForceCombustion.cs" />
+    <Compile Include="Lightside\CompAbilityEffect_ForceTransferWounds.cs" />
+    <Compile Include="Lightside\CompAbilityEffect_NurturePlants.cs" />
+    <Compile Include="LoadShaders.cs" />
+    <Compile Include="Generic\ModExtension_ForceSensitivity.cs" />
+    <Compile Include="MapComponent_ForceTracking.cs" />
+    <Compile Include="Nightsister\CompAbilityEffect_ChantofResurrection.cs" />
+    <Compile Include="Nightsister\CompAbilityEffect_NightsisterTeleport.cs" />
+    <Compile Include="Nightsister\CompAbilityEffect_SoulPyre.cs" />
+    <Compile Include="Nightsister\CompAbilityEffect_SummonObject.cs" />
+    <Compile Include="Nightsister\CompAbilityEffect_Tempest.cs" />
+    <Compile Include="Nightsister\CompAbilityEffect_WitchsBargain.cs" />
+    <Compile Include="Nightsister\Projectile_SonicScreamer.cs" />
+    <Compile Include="PawnRenderNodes\PawnRenderNodeWorker_AlignmentConditions.cs" />
+    <Compile Include="PawnRenderNodes\PawnRenderNodeWorker_AutomaticHiding.cs" />
+    <Compile Include="PawnRenderNodes\PawnRenderNodeWorker_EyeWithConditions.cs" />
+    <Compile Include="PawnRenderNodes\PawnRenderNodeWorker_OverlaySithScars.cs" />
+    <Compile Include="PawnRenderNodes\PawnRenderNode_SecondApparelText.cs" />
+    <Compile Include="PawnRenderNodes\PawnSithScarDrawer.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="StatWorker_ForcePowerMax.cs" />
+    <Compile Include="Telekinesis\CompAbilityEffect_ForceAttract.cs" />
+    <Compile Include="Telekinesis\CompAbilityEffect_ForceChoke.cs" />
+    <Compile Include="Telekinesis\CompAbilityEffect_ForceDrop.cs" />
+    <Compile Include="Telekinesis\CompAbilityEffect_ForcePull.cs" />
+    <Compile Include="Telekinesis\CompAbilityEffect_ForcePush.cs" />
+    <Compile Include="Telekinesis\CompAbilityEffect_ForceShockwave.cs" />
+    <Compile Include="Telekinesis\CompAbilityEffect_ForceRepulsion.cs" />
+    <Compile Include="Telekinesis\CompAbilityEffect_ForceThrow.cs" />
+    <Compile Include="Telekinesis\CompAbilityEffect_ForceWave.cs" />
+    <Compile Include="Telekinesis\ForceThrow.cs" />
+    <Compile Include="Telekinesis\PositionUtils.cs" />
+    <Compile Include="Telekinesis\TelekinesisPawnFlyer.cs" />
+    <Compile Include="Telekinesis\TelekinesisUtility.cs" />
+    <Compile Include="TheForce_DefOf.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Krafs.Rimworld.Ref" Version="1.6.4511-beta" />
+    <PackageReference Include="Lib.Harmony">
+      <Version>2.3.6</Version>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Neutral\" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>
