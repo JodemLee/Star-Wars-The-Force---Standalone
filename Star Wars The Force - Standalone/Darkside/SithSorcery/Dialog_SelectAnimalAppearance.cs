@@ -47,20 +47,20 @@ namespace TheForce_Standalone.Darkside.SithSorcery
         {
             // Window title
             Text.Font = GameFont.Medium;
-            Widgets.Label(new Rect(0f, 0f, inRect.width, 35f), "Force.SithSorcery_SelectAnimalTitle".Translate());
+            Widgets.Label(new(0f, 0f, inRect.width, 35f), "Force.SithSorcery_SelectAnimalTitle".Translate());
             Text.Font = GameFont.Small;
 
             // Search box
-            Rect searchRect = new Rect(0f, 40f, inRect.width, 30f);
+            Rect searchRect = new(0f, 40f, inRect.width, 30f);
             searchText = Widgets.TextField(searchRect, searchText);
             TooltipHandler.TipRegion(searchRect, "Force.SithSorcery_SearchTooltip".Translate());
 
             // Scroll view
-            Rect outRect = new Rect(0f, 75f, inRect.width, inRect.height - 100f);
+            Rect outRect = new(0f, 75f, inRect.width, inRect.height - 100f);
             float totalHeight = bodyDefCategories.Sum(x =>
                 x.Value.Count(k => MatchesSearch(k)) > 0 ?
                 (x.Value.Count(k => MatchesSearch(k)) * 35f) + 25f : 0f);
-            Rect viewRect = new Rect(0f, 0f, outRect.width - 20f, totalHeight);
+            Rect viewRect = new(0f, 0f, outRect.width - 20f, totalHeight);
 
             Widgets.BeginScrollView(outRect, ref scrollPosition, viewRect);
 
@@ -71,19 +71,19 @@ namespace TheForce_Standalone.Darkside.SithSorcery
                 if (matchingKinds.Count == 0) continue;
 
                 // Category header
-                Rect headerRect = new Rect(0f, yPos, viewRect.width, 25f);
+                Rect headerRect = new(0f, yPos, viewRect.width, 25f);
                 GUI.color = new Color(0.5f, 0.5f, 0.5f, 0.5f);
                 Widgets.DrawLineHorizontal(0f, yPos, viewRect.width);
                 GUI.color = Color.white;
 
-                Rect labelRect = new Rect(30f, yPos, viewRect.width - 30f, 25f);
+                Rect labelRect = new(30f, yPos, viewRect.width - 30f, 25f);
                 Widgets.Label(labelRect, category.Key.LabelCap);
                 yPos += 25f;
 
                 // Animal options
                 foreach (var kind in matchingKinds)
                 {
-                    Rect rowRect = new Rect(0f, yPos, viewRect.width, 30f);
+                    Rect rowRect = new(0f, yPos, viewRect.width, 30f);
                     DrawAnimalOption(rowRect, kind, ref yPos);
                 }
             }
@@ -94,7 +94,7 @@ namespace TheForce_Standalone.Darkside.SithSorcery
         private void DrawAnimalOption(Rect rect, PawnKindDef kind, ref float yPos)
         {
             // Animal preview icon
-            Rect previewRect = new Rect(5f, rect.y + 2f, 26f, 26f);
+            Rect previewRect = new(5f, rect.y + 2f, 26f, 26f);
             Texture2D previewTex = ContentFinder<Texture2D>.Get(kind.lifeStages[0].bodyGraphicData.texPath + "_north") ??
                                   ContentFinder<Texture2D>.Get(kind.lifeStages[0].bodyGraphicData.texPath);
             if (previewTex != null)
@@ -105,7 +105,7 @@ namespace TheForce_Standalone.Darkside.SithSorcery
             }
 
             // Selectable label
-            Rect selectRect = new Rect(35f, rect.y, rect.width - 35f, 30f);
+            Rect selectRect = new(35f, rect.y, rect.width - 35f, 30f);
             if (Widgets.ButtonInvisible(selectRect))
             {
                 comp.SetAppearance(kind);

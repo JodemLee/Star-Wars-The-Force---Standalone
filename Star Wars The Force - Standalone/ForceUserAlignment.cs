@@ -1,4 +1,5 @@
 ﻿using RimWorld;
+using TheForce_Standalone.Alignment;
 using UnityEngine;
 using Verse;
 
@@ -9,6 +10,9 @@ namespace TheForce_Standalone
         private readonly CompClass_ForceUser parent;
         private float darkSideAttunement;
         private float lightSideAttunement;
+        public CrystalTransformationSystem CrystalTransformation { get; private set; }
+
+        public bool enableDarkSideVisuals = true;
 
         public float DarkSideAttunement
         {
@@ -45,8 +49,16 @@ namespace TheForce_Standalone
             this.parent = parent;
         }
 
+        public void Reset()
+        {
+            darkSideAttunement = 0f;
+            lightSideAttunement = 0f;
+        }
+
         public void Initialize()
         {
+            if (parent?.Pawn == null) return;
+
             var forceUserExt = parent.Pawn.kindDef?.GetModExtension<ModExtension_ForceUser>();
 
             if (forceUserExt != null)
@@ -54,12 +66,14 @@ namespace TheForce_Standalone
                 DarkSideAttunement = forceUserExt.darkSideRange.RandomInRange;
                 LightSideAttunement = forceUserExt.lightSideRange.RandomInRange;
             }
+            CrystalTransformation = new CrystalTransformationSystem(parent);
         }
 
         public void ExposeData()
         {
             Scribe_Values.Look(ref darkSideAttunement, "darkSideAttunement", 0f);
             Scribe_Values.Look(ref lightSideAttunement, "lightSideAttunement", 0f);
+            Scribe_Values.Look(ref enableDarkSideVisuals, "enableDarkSideVisuals", true);
         }
 
         public void AddDarkSideAttunement(float amount) => darkSideAttunement += amount;

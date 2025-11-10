@@ -48,10 +48,11 @@ namespace TheForce_Standalone.Telekinesis
                 out bool hitWall
                 );
 
-                thing.TakeDamage(new DamageInfo(Props.damageDef ?? DamageDefOf.Blunt, Props.damageAmount, Props.armorPenetration * offsetMultiplier, -1, parent.pawn, null, null, DamageInfo.SourceCategory.ThingOrUnknown, thing, true, true, QualityCategory.Normal, true, false));
-
+               
                 if (thing is Pawn pawnTarget && thing != parent.pawn)
                 {
+                    thing.TakeDamage(new DamageInfo(Props.damageDef ?? DamageDefOf.Blunt, Props.damageAmount, Props.armorPenetration * offsetMultiplier, -1, parent.pawn, null, null, DamageInfo.SourceCategory.ThingOrUnknown, thing, true, true, QualityCategory.Normal, true, false));
+
                     TelekinesisUtility.LaunchPawn(
                         pawnTarget,
                         pushBackPosition,
@@ -59,12 +60,12 @@ namespace TheForce_Standalone.Telekinesis
                         ForceDefOf.Force_ThrownPawnRepulse,
                         parent.pawn.Map,
                         hitWall,
-                        hitWall ? pushBackPosition : (IntVec3?) null
+                        hitWall ? pushBackPosition : (IntVec3?)null
                     );
                 }
                 else if (thing != null)
                 {
-                    
+
                 }
             }
         }

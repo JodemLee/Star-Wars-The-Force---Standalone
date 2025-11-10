@@ -6,6 +6,10 @@ namespace TheForce_Standalone
 {
     public class ModExtension_ForceSensitivity : DefModExtension
     {
+        public float minMidichlorians = 4000f;
+        public float maxMidichlorians = 20000f;
+        public bool forceSensitive = true;
+        public float midichlorianMultiplier = 1f;
     }
 
     public class ModExtension_ForceUser : DefModExtension

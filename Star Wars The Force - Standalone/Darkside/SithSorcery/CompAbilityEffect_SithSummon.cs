@@ -15,13 +15,13 @@ namespace TheForce_Standalone.Darkside.SithSorcery
             Map map = parent.pawn.Map;
             IntVec3 entryCell = FindRandomEntryCell(map);
 
-            if (Props.animalKinds.NullOrEmpty())
+            if (Props.pawnKinds.NullOrEmpty())
             {
                 Log.Error("No animal kinds defined in CompProperties_SithSummon");
                 return;
             }
 
-            PawnKindDef selectedAnimalKind = Props.animalKinds.RandomElement();
+            PawnKindDef selectedAnimalKind = Props.pawnKinds.RandomElement();
             int numberToSpawn = Props.numberToSpawn.RandomInRange;
 
             for (int i = 0; i < numberToSpawn; i++)
@@ -38,8 +38,8 @@ namespace TheForce_Standalone.Darkside.SithSorcery
             }
 
             Find.LetterStack.ReceiveLetter(
-                "Force.Summon".Translate(),
-                "Force.Summon.Desc".Translate(parent.pawn.NameShortColored, selectedAnimalKind.label, numberToSpawn),
+                "Force.Summon_AbilityName".Translate(),
+                "Force.Summon_AbilityDesc".Translate(parent.pawn.NameShortColored, selectedAnimalKind.label, numberToSpawn),
                 LetterDefOf.PositiveEvent,
                 new TargetInfo(entryCell, map)
             );
@@ -68,7 +68,7 @@ namespace TheForce_Standalone.Darkside.SithSorcery
 
     public class CompProperties_SithSummon : CompProperties_AbilityEffect
     {
-        public List<PawnKindDef> animalKinds;
+        public List<PawnKindDef> pawnKinds;
         public IntRange numberToSpawn = new IntRange(1, 3);
 
         public CompProperties_SithSummon()

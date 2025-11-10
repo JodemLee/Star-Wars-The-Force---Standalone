@@ -22,6 +22,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <LangVersion>preview</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>embedded</DebugType>
@@ -30,9 +31,13 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <LangVersion>preview</LangVersion>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="AlignmentActionLogger.cs" />
     <Compile Include="Alignment\Alignment Extensions.cs" />
+    <Compile Include="Alignment\CrystalTransformationSystem.cs" />
+    <Compile Include="Alignment\JobDriver_TransformCrystal.cs" />
     <Compile Include="Apprenticeship\Gizmo_Apprentice.cs" />
     <Compile Include="Apprenticeship\Hediff_Apprentice.cs" />
     <Compile Include="Apprenticeship\Hediff_Master.cs" />
@@ -45,6 +50,7 @@
     <Compile Include="Apprenticeship\Ritual\RitualOutcomeComp_ForceLevelScaled.cs" />
     <Compile Include="Apprenticeship\Ritual\RitualOutcomeEffectWorker_Lecture.cs" />
     <Compile Include="Apprenticeship\Ritual\RitualStage_SelectedTarget.cs" />
+    <Compile Include="Darkside\CompAbilityEffect_LifeforceDrain.cs" />
     <Compile Include="Darkside\CompAbilityEffect_SummonPhantom.cs" />
     <Compile Include="Darkside\Mechu-Deru\CompAbilityEffect_MechOverride .cs" />
     <Compile Include="Darkside\Mechu-Deru\CompAbilityEffect_MechuFlare.cs" />
@@ -62,12 +68,21 @@
     <Compile Include="Darkside\Mechu-Deru\HediffComp_MechuFlare.cs" />
     <Compile Include="Darkside\Mechu-Deru\PowerNetUtilities.cs" />
     <Compile Include="Darkside\Mind Control Jobs\JobDriver_BlindSelf.cs" />
+    <Compile Include="Darkside\Mind Control Jobs\JobDriver_PlayAnimation.cs" />
     <Compile Include="Darkside\Mind Control Jobs\JobDriver_RemoveBodyPart.cs" />
     <Compile Include="Darkside\Mind Control Jobs\JobDriver_RemoveHeart.cs" />
     <Compile Include="Darkside\Mind Control Jobs\JobDriver_SelfIgnite.cs" />
+    <Compile Include="Darkside\SithSorcery\Alchemy\Building_AlchemyStationAutonomous.cs" />
+    <Compile Include="Darkside\SithSorcery\Alchemy\Hediff_KorribanZombie.cs" />
+    <Compile Include="Darkside\SithSorcery\Alchemy\ITab_Alchemy.cs" />
+    <Compile Include="Darkside\SithSorcery\Alchemy\ThingComp_HarvestHediff.cs" />
+    <Compile Include="Darkside\SithSorcery\Alchemy\WorkGiver_HaulToAlchemySpot.cs" />
+    <Compile Include="Darkside\SithSorcery\Artifacts\CompPossessionMask.cs" />
     <Compile Include="Darkside\SithSorcery\CompAbilityEffect_CraftSithArtifact .cs" />
     <Compile Include="Darkside\SithSorcery\CompAbilityEffect_DarkLightningChain.cs" />
+    <Compile Include="Darkside\SithSorcery\CompAbilityEffect_DrainForce.cs" />
     <Compile Include="Darkside\SithSorcery\CompAbilityEffect_SithDrainKnowledge.cs" />
+    <Compile Include="Darkside\SithSorcery\CompAbilityEffect_SithGhostSummon.cs" />
     <Compile Include="Darkside\SithSorcery\CompAbilityEffect_SithLightningStrike.cs" />
     <Compile Include="Darkside\SithSorcery\CompAbilityEffect_SithResurrection.cs" />
     <Compile Include="Darkside\SithSorcery\CompAbilityEffect_SithRitualDrainEssence.cs" />
@@ -79,7 +94,16 @@
     <Compile Include="Darkside\SithSorcery\Dialog_SelectAnimalAppearance.cs" />
     <Compile Include="Darkside\SithSorcery\SithLightningEvent.cs" />
     <Compile Include="DefCultureExtension.cs" />
-    <Compile Include="Dialog_AlignmentActions.cs" />
+    <Compile Include="DevActions.cs" />
+    <Compile Include="Dialogs\Dialog_AbilityPresets.cs" />
+    <Compile Include="Dialogs\Dialog_AlignmentActions.cs" />
+    <Compile Include="Dialogs\Dialog_CopyPreset.cs" />
+    <Compile Include="Dialogs\Dialog_PawnForceSettings.cs" />
+    <Compile Include="Dialogs\Dialog_SavePreset.cs" />
+    <Compile Include="Dialogs\Dialog_SelectBackstory.cs" />
+    <Compile Include="Dialogs\Dialog_TeachAbility.cs" />
+    <Compile Include="Dialogs\ForceAlignmentUtility.cs" />
+    <Compile Include="Doorstopper.cs" />
     <Compile Include="ForceSensitivityUtils.cs" />
     <Compile Include="ForceUserAbilities.cs" />
     <Compile Include="ForceUserAlignment.cs" />
@@ -87,6 +111,9 @@
     <Compile Include="ForceUserGizmo.cs" />
     <Compile Include="ForceUserLeveling.cs" />
     <Compile Include="ForceUserLimbs.cs" />
+    <Compile Include="Force_ApprenticeshipSystem.cs" />
+    <Compile Include="Generic\CompAbilityEffect_Disguise.cs" />
+    <Compile Include="Generic\CompAbilityEffect_GiveHediffInCone.cs" />
     <Compile Include="Generic\CompAbilityEffect_GiveMentalState.cs" />
     <Compile Include="Generic\CompAbilityEffect_MindTrick.cs" />
     <Compile Include="Generic\CompAbilityEffect_OnlyTargetAllies.cs" />
@@ -95,22 +122,36 @@
     <Compile Include="Generic\CompAbilityEffect_Stun.cs" />
     <Compile Include="Generic\CompAbilityEffect_WithParentDuration.cs" />
     <Compile Include="CompClass_ForceUser.cs" />
+    <Compile Include="Generic\CompAuraEffect.cs" />
+    <Compile Include="Generic\CompGlower_Options.cs" />
     <Compile Include="Generic\CompProperties_AbilityWithStat.cs" />
     <Compile Include="Generic\CompAbilityEffect_ForcePower.cs" />
     <Compile Include="Darkside\CompAbilityEffect_ForceDestruction.cs" />
     <Compile Include="Darkside\CompAbilityEffect_ForceHatred.cs" />
     <Compile Include="Darkside\CompAbilityEffect_EssenceTransfer.cs" />
-    <Compile Include="Dialog_ForceAbilities.cs" />
-    <Compile Include="ForceAttunement.cs" />
+    <Compile Include="Dialogs\Dialog_ForceAbilities.cs" />
+    <Compile Include="Dialogs\ITab_Pawn_Alignment.cs" />
     <Compile Include="Force_ModSettings.cs" />
     <Compile Include="Generic\CompAbilityEffect_ExplosionWithDirection.cs" />
+    <Compile Include="Generic\CompUseEffect_GainRandomAbility.cs" />
     <Compile Include="Generic\ForceAbilityDefExtension.cs" />
     <Compile Include="Generic\ForceGhostUtility.cs" />
+    <Compile Include="Generic\ModExtension_AbilityReflection.cs" />
+    <Compile Include="Generic\ModExtension_ApparelColoring.cs" />
+    <Compile Include="Generic\ModExtension_SyncedApparelColor.cs" />
+    <Compile Include="Generic\PawnIdentitySwapper.cs" />
+    <Compile Include="Generic\ThingComp_ParentGlow.cs" />
+    <Compile Include="Generic\Utility_FPCostMenu.cs" />
+    <Compile Include="Generic\Verb_AbilityLaunchProjectile.cs" />
+    <Compile Include="HARCompat.cs" />
+    <Compile Include="HediffComps\HediffComp_Cancel.cs" />
+    <Compile Include="HediffComps\HediffComp_ProjectileHolder.cs" />
     <Compile Include="Generic\ModExtension_FactionExtension.cs" />
     <Compile Include="Generic\ModExtension_TechHediffExtension.cs" />
     <Compile Include="Generic\ModExtension_TraitChances.cs" />
     <Compile Include="Generic\PawnCloningUtility.cs" />
     <Compile Include="Generic\Recipe_MidichlorianTest.cs" />
+    <Compile Include="Genes\Gene_LatentForceUser.cs" />
     <Compile Include="GizmoUtils.cs" />
     <Compile Include="HarmonyPatches\Darkside_HarmonyPatch.cs" />
     <Compile Include="HarmonyPatches\ForceGhost_HarmonyPatch.cs" />
@@ -119,19 +160,29 @@
     <Compile Include="HarmonyPatches\PawnPatches.cs" />
     <Compile Include="HediffComps\HediffComp_Aura.cs" />
     <Compile Include="HediffComps\HediffComp_ChanneledAbility.cs" />
+    <Compile Include="HediffComps\HediffComp_DisappearsOnDown.cs" />
     <Compile Include="HediffComps\HediffComp_Enlighten.cs" />
     <Compile Include="HediffComps\HediffComp_LinkWithEffect.cs" />
+    <Compile Include="HediffComps\HediffComp_SithRitualDrainEssence.cs" />
+    <Compile Include="HediffComps\HediffComp_StunDuration.cs" />
+    <Compile Include="HediffComps\HediffComp_ThingHolder.cs" />
     <Compile Include="HediffComps\HediffComp_Regeneration.cs" />
     <Compile Include="HediffComps\HediffComp_Shield.cs" />
     <Compile Include="HediffComps\HediffComp_Vanish.cs" />
     <Compile Include="HediffComps\Hediff_ForceReplacement.cs" />
     <Compile Include="Lightside\CompAbilityEffect_ForceBond.cs" />
     <Compile Include="Lightside\CompAbilityEffect_ForceCombustion.cs" />
+    <Compile Include="Lightside\CompAbilityEffect_ForceInspire.cs" />
+    <Compile Include="Lightside\CompAbilityEffect_ForceLight.cs" />
     <Compile Include="Lightside\CompAbilityEffect_ForceTransferWounds.cs" />
     <Compile Include="Lightside\CompAbilityEffect_NurturePlants.cs" />
+    <Compile Include="Lightside\CompAbilityEffect_SecondWind.cs" />
+    <Compile Include="Lightside\JobDriver_SerenityTrance.cs" />
     <Compile Include="LoadShaders.cs" />
     <Compile Include="Generic\ModExtension_ForceSensitivity.cs" />
     <Compile Include="MapComponent_ForceTracking.cs" />
+    <Compile Include="Misc\ForceDyadUtility.cs" />
+    <Compile Include="Misc\Need_Lifeforce.cs" />
     <Compile Include="Nightsister\CompAbilityEffect_ChantofResurrection.cs" />
     <Compile Include="Nightsister\CompAbilityEffect_NightsisterTeleport.cs" />
     <Compile Include="Nightsister\CompAbilityEffect_SoulPyre.cs" />
@@ -146,10 +197,13 @@
     <Compile Include="PawnRenderNodes\PawnRenderNode_SecondApparelText.cs" />
     <Compile Include="PawnRenderNodes\PawnSithScarDrawer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="StatWorker_ForceLevel.cs" />
     <Compile Include="StatWorker_ForcePowerMax.cs" />
     <Compile Include="Telekinesis\CompAbilityEffect_ForceAttract.cs" />
     <Compile Include="Telekinesis\CompAbilityEffect_ForceChoke.cs" />
+    <Compile Include="Telekinesis\CompAbilityEffect_ForceDisassemble.cs" />
     <Compile Include="Telekinesis\CompAbilityEffect_ForceDrop.cs" />
+    <Compile Include="Telekinesis\CompAbilityEffect_ForceGrip.cs" />
     <Compile Include="Telekinesis\CompAbilityEffect_ForcePull.cs" />
     <Compile Include="Telekinesis\CompAbilityEffect_ForcePush.cs" />
     <Compile Include="Telekinesis\CompAbilityEffect_ForceShockwave.cs" />
@@ -170,6 +224,12 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Neutral\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="AlienRace">
+      <HintPath>L:\SteamLibrary\steamapps\workshop\content\294100\839005762\1.6\Assemblies\AlienRace.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

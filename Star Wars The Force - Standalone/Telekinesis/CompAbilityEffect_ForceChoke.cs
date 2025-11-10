@@ -9,7 +9,7 @@ namespace TheForce_Standalone.Telekinesis
     {
         public float GetPowerForPawn()
         {
-            return Mathf.FloorToInt((parent.pawn.GetStatValue(StatDefOf.PsychicSensitivity) - 1) * 4);
+            return 5f;
         }
 
         public override void Apply(LocalTargetInfo target, LocalTargetInfo dest)

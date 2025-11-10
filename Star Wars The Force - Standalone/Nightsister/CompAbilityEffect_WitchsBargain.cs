@@ -121,14 +121,14 @@ namespace TheForce_Standalone.Nightsister
         public override void DoWindowContents(Rect inRect)
         {
             Text.Font = GameFont.Medium;
-            Widgets.Label(new Rect(0f, 0f, inRect.width, 40f), "Witch's Bargain - Select Skills to Swap");
+            Widgets.Label(new(0f, 0f, inRect.width, 40f), "Witch's Bargain - Select Skills to Swap");
             Text.Font = GameFont.Small;
 
             float y = 50f;
             foreach (var skillDef in DefDatabase<SkillDef>.AllDefs)
             {
                 var skillRecord = targetPawn.skills.GetSkill(skillDef);
-                Rect skillRect = new Rect(0f, y, inRect.width, 30f);
+                Rect skillRect = new(0f, y, inRect.width, 30f);
 
                 // Highlight selected skills
                 if (skillDef == selectedFirstSkill || skillDef == selectedSecondSkill)
@@ -163,7 +163,7 @@ namespace TheForce_Standalone.Nightsister
             // Confirm button when two skills are selected
             if (selectedFirstSkill != null && selectedSecondSkill != null)
             {
-                Rect confirmRect = new Rect(0f, y + 20f, inRect.width, 40f);
+                Rect confirmRect = new(0f, y + 20f, inRect.width, 40f);
                 if (Widgets.ButtonText(confirmRect, "Swap Skills"))
                 {
                     abilityComp.ApplySwap(targetPawn, selectedFirstSkill, selectedSecondSkill);

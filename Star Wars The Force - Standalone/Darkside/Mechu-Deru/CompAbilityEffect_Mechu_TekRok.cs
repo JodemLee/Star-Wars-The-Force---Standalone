@@ -149,11 +149,11 @@ namespace TheForce_Standalone.Darkside.Mechu_Deru
         public override void DoWindowContents(Rect inRect)
         {
             Text.Font = GameFont.Medium;
-            Widgets.Label(new Rect(0, 0, inRect.width, 30f), "Force.MechuTek_SelectImplant".Translate(targetPawn.LabelCap));
+            Widgets.Label(new(0, 0, inRect.width, 30f), "Force.MechuTek_SelectImplant".Translate(targetPawn.LabelCap));
             Text.Font = GameFont.Small;
 
-            Rect leftRect = new Rect(0, 40f, inRect.width * 0.3f, inRect.height - 40f);
-            Rect rightRect = new Rect(leftRect.width, 40f, inRect.width - leftRect.width, inRect.height - 40f);
+            Rect leftRect = new(0, 40f, inRect.width * 0.3f, inRect.height - 40f);
+            Rect rightRect = new(leftRect.width, 40f, inRect.width - leftRect.width, inRect.height - 40f);
 
             DrawPawnPortrait(leftRect, targetPawn);
             DrawHediffList(rightRect, targetPawn);
@@ -161,16 +161,16 @@ namespace TheForce_Standalone.Darkside.Mechu_Deru
 
         private void DrawPawnPortrait(Rect rect, Pawn pawn)
         {
-            Rect portraitRect = new Rect(rect.center.x - 40f, rect.center.y - 60f, 80f, 120f);
+            Rect portraitRect = new(rect.center.x - 40f, rect.center.y - 60f, 80f, 120f);
             GUI.DrawTexture(portraitRect, PortraitsCache.Get(pawn, portraitRect.size, Rot4.South));
         }
 
         private void DrawHediffList(Rect rect, Pawn pawn)
         {
-            Rect scrollRect = new Rect(rect.x, rect.y, rect.width, rect.height - 16f);
+            Rect scrollRect = new(rect.x, rect.y, rect.width, rect.height - 16f);
             var hediffGroups = GetVisibleHediffGroups(pawn);
             float viewRectHeight = hediffGroups.Sum(group => group.Count() * 25f);
-            Rect viewRect = new Rect(0, 0, scrollRect.width - 16f, viewRectHeight);
+            Rect viewRect = new(0, 0, scrollRect.width - 16f, viewRectHeight);
 
             Widgets.BeginScrollView(scrollRect, ref scrollPosition, viewRect);
             float curY = 0;
@@ -179,7 +179,7 @@ namespace TheForce_Standalone.Darkside.Mechu_Deru
             {
                 foreach (var hediff in group)
                 {
-                    Rect rowRect = new Rect(0, curY, viewRect.width, 25f);
+                    Rect rowRect = new(0, curY, viewRect.width, 25f);
                     DrawHediffRow(rowRect, hediff);
                     curY += 25f;
                 }
@@ -214,15 +214,15 @@ namespace TheForce_Standalone.Darkside.Mechu_Deru
             float padding = 4f;
             float colWidth = (rect.width - infoButtonSize - padding * 3) / 3;
 
-            if (Widgets.InfoCardButton(new Rect(rect.x + padding, rect.y + (rect.height - infoButtonSize) / 2, infoButtonSize, infoButtonSize), hediff))
+            if (Widgets.InfoCardButton(new(rect.x + padding, rect.y + (rect.height - infoButtonSize) / 2, infoButtonSize, infoButtonSize), hediff))
             {
                 Find.WindowStack.Add(new Dialog_InfoCard(hediff));
             }
 
-            Widgets.Label(new Rect(rect.x + padding + infoButtonSize + padding, rect.y, colWidth, rect.height), hediff.LabelCap);
-            Widgets.Label(new Rect(rect.x + padding + infoButtonSize + padding + colWidth, rect.y, colWidth, rect.height), hediff.Part?.LabelCap ?? "Force.General_WholeBody".Translate());
+            Widgets.Label(new(rect.x + padding + infoButtonSize + padding, rect.y, colWidth, rect.height), hediff.LabelCap);
+            Widgets.Label(new(rect.x + padding + infoButtonSize + padding + colWidth, rect.y, colWidth, rect.height), hediff.Part?.LabelCap ?? "Force.General_WholeBody".Translate());
 
-            if (Widgets.ButtonText(new Rect(rect.x + padding + infoButtonSize + padding + colWidth * 2, rect.y, colWidth, rect.height), "Force.General_Select".Translate()))
+            if (Widgets.ButtonText(new(rect.x + padding + infoButtonSize + padding + colWidth * 2, rect.y, colWidth, rect.height), "Force.General_Select".Translate()))
             {
                 Find.WindowStack.Add(new Dialog_ChooseReplacement(targetPawn, hediff, casterPawn, onImplantSelected));
                 Close();
@@ -270,31 +270,31 @@ namespace TheForce_Standalone.Darkside.Mechu_Deru
         public override void DoWindowContents(Rect inRect)
         {
             Text.Font = GameFont.Medium;
-            Widgets.Label(new Rect(0, 0, inRect.width, 30f), "Force.MechuTek_SelectReplacement".Translate(selectedImplant.LabelCap));
+            Widgets.Label(new(0, 0, inRect.width, 30f), "Force.MechuTek_SelectReplacement".Translate(selectedImplant.LabelCap));
             Text.Font = GameFont.Small;
 
-            Rect scrollRect = new Rect(0, 40f, inRect.width - 16f, inRect.height - 50f);
-            Rect viewRect = new Rect(0, 0, scrollRect.width - 16f, GetReplacementOptions().Count() * 30f);
+            Rect scrollRect = new(0, 40f, inRect.width - 16f, inRect.height - 50f);
+            Rect viewRect = new(0, 0, scrollRect.width - 16f, GetReplacementOptions().Count() * 30f);
 
             Widgets.BeginScrollView(scrollRect, ref scrollPosition, viewRect);
             float curY = 0;
 
             foreach (var implantDef in GetReplacementOptions())
             {
-                Rect rowRect = new Rect(0, curY, viewRect.width, 30f);
+                Rect rowRect = new(0, curY, viewRect.width, 30f);
                 float infoButtonSize = 24f;
                 float padding = 5f;
                 float colWidth = (rowRect.width - infoButtonSize - padding * 2) / 3;
 
-                if (Widgets.InfoCardButton(new Rect(rowRect.x + padding, rowRect.y + (rowRect.height - infoButtonSize) / 2, infoButtonSize, infoButtonSize), implantDef))
+                if (Widgets.InfoCardButton(new(rowRect.x + padding, rowRect.y + (rowRect.height - infoButtonSize) / 2, infoButtonSize, infoButtonSize), implantDef))
                 {
                     Find.WindowStack.Add(new Dialog_InfoCard(implantDef));
                 }
 
-                Widgets.Label(new Rect(rowRect.x + padding + infoButtonSize + padding, rowRect.y, colWidth, rowRect.height), implantDef.LabelCap);
-                Widgets.Label(new Rect(rowRect.x + padding + infoButtonSize + padding + colWidth, rowRect.y, colWidth, rowRect.height), selectedImplant.Part?.LabelCap ?? "Force.General_WholeBody".Translate());
+                Widgets.Label(new(rowRect.x + padding + infoButtonSize + padding, rowRect.y, colWidth, rowRect.height), implantDef.LabelCap);
+                Widgets.Label(new(rowRect.x + padding + infoButtonSize + padding + colWidth, rowRect.y, colWidth, rowRect.height), selectedImplant.Part?.LabelCap ?? "Force.General_WholeBody".Translate());
 
-                if (Widgets.ButtonText(new Rect(rowRect.x + padding + infoButtonSize + padding + colWidth * 2, rowRect.y, colWidth, rowRect.height), "Force.General_Select".Translate()))
+                if (Widgets.ButtonText(new(rowRect.x + padding + infoButtonSize + padding + colWidth * 2, rowRect.y, colWidth, rowRect.height), "Force.General_Select".Translate()))
                 {
                     onReplacementChosen(targetPawn, selectedImplant, implantDef);
                     Close();

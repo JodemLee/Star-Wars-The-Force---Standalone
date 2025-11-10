@@ -1,6 +1,8 @@
 ﻿using RimWorld;
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 using Verse;
 
 namespace TheForce_Standalone.Generic
@@ -38,15 +40,23 @@ namespace TheForce_Standalone.Generic
                 maximumAgeTraits: -1, minimumAgeTraits: 0, forceNoGear: true);
 
             Pawn newPawn = PawnGenerator.GeneratePawn(request);
-
-            // Copy essential properties
             CopyBasicProperties(pawn, newPawn);
             CopyGenesAndTraits(pawn, newPawn);
             CopyAppearanceAndStyle(pawn, newPawn);
             CopySkillsAndAbilities(pawn, newPawn);
             CopyHealthAndNeeds(pawn, newPawn);
+            if (HARCompat.HARActive)
+            {
+                try
+                {
+                    HARCompat.CopyAlienData(pawn, newPawn);
+                }
+                catch
+                {
+                    Log.Error("HAR CHECK FAILED");
+                }
+            }
 
-            // Notify the new pawn of duplication
             newPawn.Notify_DuplicatedFrom(pawn);
             newPawn.Drawer.renderer.SetAllGraphicsDirty();
             newPawn.Notify_DisabledWorkTypesChanged();
@@ -54,7 +64,7 @@ namespace TheForce_Standalone.Generic
             return newPawn;
         }
 
-        private static void CopyBasicProperties(Pawn source, Pawn target)
+        public static void CopyBasicProperties(Pawn source, Pawn target)
         {
             target.Name = NameTriple.FromString(source.Name.ToString());
             target.gender = source.gender;
@@ -65,22 +75,35 @@ namespace TheForce_Standalone.Generic
             {
                 target.ageTracker.growthPoints = source.ageTracker.growthPoints;
                 target.ageTracker.vatGrowTicks = source.ageTracker.vatGrowTicks;
-                target.genes.xenotypeName = source.genes.xenotypeName;
-                target.genes.iconDef = source.genes.iconDef;
             }
         }
 
-        private static void CopyGenesAndTraits(Pawn source, Pawn target)
+        public static void CopyBasicPropertiesNoName(Pawn source, Pawn target)
+        {
+
+            target.story.Adulthood = source.story.Adulthood;
+            target.story.Childhood = source.story.Childhood;
+
+            if (ModsConfig.BiotechActive)
+            {
+                target.ageTracker.growthPoints = source.ageTracker.growthPoints;
+                target.ageTracker.vatGrowTicks = source.ageTracker.vatGrowTicks;
+
+            }
+        }
+
+
+        public static void CopyGenesAndTraits(Pawn source, Pawn target)
         {
             // Copy genes
             if (ModsConfig.BiotechActive)
             {
+                target.genes.SetXenotype(source.genes.Xenotype);
                 target.genes.Xenogenes.Clear();
                 foreach (var gene in source.genes.Xenogenes)
                 {
                     target.genes.AddGene(gene.def, xenogene: true);
                 }
-
                 target.genes.Endogenes.Clear();
                 foreach (var gene in source.genes.Endogenes)
                 {
@@ -96,7 +119,7 @@ namespace TheForce_Standalone.Generic
             }
         }
 
-        private static void CopyAppearanceAndStyle(Pawn source, Pawn target)
+        public static void CopyAppearanceAndStyle(Pawn source, Pawn target)
         {
             target.story.headType = source.story.headType;
             target.story.bodyType = source.story.bodyType;
@@ -106,15 +129,15 @@ namespace TheForce_Standalone.Generic
             target.story.skinColorOverride = source.story.skinColorOverride;
             target.story.furDef = source.story.furDef;
 
-            target.style.beardDef = source.style.beardDef;
             if (ModsConfig.IdeologyActive)
             {
+                target.style.beardDef = source.style.beardDef;
                 target.style.BodyTattoo = source.style.BodyTattoo;
                 target.style.FaceTattoo = source.style.FaceTattoo;
             }
         }
 
-        private static void CopySkillsAndAbilities(Pawn source, Pawn target)
+        public static void CopySkillsAndAbilities(Pawn source, Pawn target)
         {
             // Copy skills
             target.skills.skills.Clear();
@@ -138,13 +161,13 @@ namespace TheForce_Standalone.Generic
             }
         }
 
-        private static void CopyHealthAndNeeds(Pawn source, Pawn target)
+        public static void CopyHealthAndNeeds(Pawn source, Pawn target)
         {
             // Copy health (hediffs)
             target.health.hediffSet.hediffs.Clear();
             foreach (var hediff in source.health.hediffSet.hediffs)
             {
-                if (hediff.def.duplicationAllowed && (hediff.Part == null || target.health.hediffSet.HasBodyPart(hediff.Part)))
+                if (hediff.def.duplicationAllowed && (hediff.Part == null || target.health.hediffSet.HasBodyPart(hediff.Part)) && !hediff.def.countsAsAddedPartOrImplant)
                 {
                     var newHediff = HediffMaker.MakeHediff(hediff.def, target, hediff.Part);
                     newHediff.CopyFrom(hediff);
@@ -161,6 +184,121 @@ namespace TheForce_Standalone.Generic
                 newNeed.SetInitialLevel();
                 newNeed.CurLevel = need.CurLevel;
                 target.needs.AllNeeds.Add(newNeed);
+            }
+        }
+
+        public static void CopyApparel(Pawn source, Pawn target)
+        {
+
+            if (source.apparel == null || source.apparel == null) return;
+
+            // Remove any existing apparel from the copy first
+            var copyApparelList = target.apparel.WornApparel.ToList();
+            foreach (var apparel in copyApparelList)
+            {
+                target.apparel.Remove(apparel);
+            }
+
+            // Create a list of apparel to copy from original
+            var apparelToCopy = source.apparel.WornApparel.ToList();
+            var newApparelList = new List<Apparel>();
+
+            // First create all the new apparel items
+            foreach (Apparel originalApparel in apparelToCopy)
+            {
+                try
+                {
+                    if (originalApparel != null && originalApparel.def != null)
+                    {
+                        Apparel newApparel = (Apparel)ThingMaker.MakeThing(originalApparel.def, originalApparel.Stuff);
+                        if (newApparel != null)
+                        {
+                            newApparelList.Add(newApparel);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Error($"Error creating apparel copy for {originalApparel?.Label ?? "null"}: {ex}");
+                }
+            }
+
+            // Then wear all the new apparel
+            foreach (var newApparel in newApparelList)
+            {
+                try
+                {
+                    if (newApparel != null && target.apparel.CanWearWithoutDroppingAnything(newApparel.def))
+                    {
+                        target.apparel.Wear(newApparel);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Error($"Error wearing apparel {newApparel?.Label ?? "null"}: {ex}");
+                }
+            }
+
+        }
+
+        public static void CopyEquipment(Pawn source, Pawn target)
+        {
+            if (source.equipment == null || target.equipment == null) return;
+
+            try
+            {
+                // Remove any existing equipment from the target first
+                var targetEquipmentList = target.equipment.AllEquipmentListForReading.ToList();
+                foreach (var equipment in targetEquipmentList)
+                {
+                    target.equipment.Remove(equipment);
+                }
+
+                // Copy all equipment from source to target
+                var equipmentToCopy = source.equipment.AllEquipmentListForReading.ToList();
+                var newEquipmentList = new List<ThingWithComps>();
+
+                // First create all the new equipment items
+                foreach (ThingWithComps originalEquipment in equipmentToCopy)
+                {
+                    try
+                    {
+                        if (originalEquipment != null && originalEquipment.def != null)
+                        {
+                            ThingWithComps newEquipment = (ThingWithComps)ThingMaker.MakeThing(originalEquipment.def, originalEquipment.Stuff);
+                            if (newEquipment != null)
+                            {
+                                // Copy hit points
+                                newEquipment.HitPoints = Mathf.Clamp(originalEquipment.HitPoints, 1, newEquipment.MaxHitPoints);
+                                newEquipmentList.Add(newEquipment);
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Error($"Error creating equipment copy for {originalEquipment?.Label ?? "null"}: {ex}");
+                    }
+                }
+
+                // Then add all the new equipment
+                foreach (var newEquipment in newEquipmentList)
+                {
+                    try
+                    {
+                        if (newEquipment != null)
+                        {
+                            target.equipment.AddEquipment(newEquipment);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Error($"Error adding equipment {newEquipment?.Label ?? "null"}: {ex}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"Error in CopyEquipment: {ex}");
             }
         }
     }

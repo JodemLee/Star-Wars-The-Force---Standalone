@@ -17,7 +17,6 @@ namespace TheForce_Standalone.PawnRenderNodes
 
     public class PawnRenderNode_Apparel_DualTexture : PawnRenderNode_Apparel
     {
-        private Graphic backGraphic;
         public bool isBackLayer;
         public PawnRenderNode_Apparel_DualTexture(Pawn pawn, PawnRenderNodeProperties props, PawnRenderTree tree)
             : base(pawn, props, tree, null)
@@ -90,7 +89,6 @@ namespace TheForce_Standalone.PawnRenderNodes
 
     public class PawnRenderNode_ApparelHead_DualTexture : PawnRenderNode_Apparel
     {
-        private Graphic backGraphic;
         public bool isBackLayer;
         public PawnRenderNode_ApparelHead_DualTexture(Pawn pawn, PawnRenderNodeProperties props, PawnRenderTree tree)
             : base(pawn, props, tree, null)

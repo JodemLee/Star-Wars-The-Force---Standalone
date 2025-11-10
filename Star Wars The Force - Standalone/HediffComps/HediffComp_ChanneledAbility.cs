@@ -1,13 +1,16 @@
 ﻿using RimWorld;
+using System.Collections.Generic;
+using UnityEngine;
 using Verse;
 
 namespace TheForce_Standalone.HediffComps
 {
+    [StaticConstructorOnStartup]
     internal class HediffComp_ChanneledAbility : HediffComp
     {
         public virtual float FPCostPerTick => 1;
         public virtual float SeverityIncreasePerTick => 0.0001f;
-
+        private static readonly Texture2D CancelIcon = ContentFinder<Texture2D>.Get("UI/Designators/Cancel");
         public HediffCompProperties_ChanneledAbility Props => (HediffCompProperties_ChanneledAbility)props;
         public float CurrentFPCost
         {
@@ -40,6 +43,23 @@ namespace TheForce_Standalone.HediffComps
                 {
                     Pawn.health.RemoveHediff(parent);
                 }
+            }
+        }
+
+        public override IEnumerable<Gizmo> CompGetGizmos()
+        {
+            if (Pawn.IsColonistPlayerControlled)
+            {
+                yield return new Command_Action
+                {
+                    defaultLabel = "Force_CancelBuff".Translate(parent.def.LabelCap),
+                    defaultDesc = "Force_CancelBuffDesc".Translate(parent.def.LabelCap),
+                    icon = CancelIcon,
+                    action = () =>
+                    {
+                        Pawn.health.RemoveHediff(parent);
+                    }
+                };
             }
         }
 

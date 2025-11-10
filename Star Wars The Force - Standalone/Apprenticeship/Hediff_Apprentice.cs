@@ -1,5 +1,5 @@
 ﻿using RimWorld;
-using TheForce_Standalone;
+using TheForce_Standalone.Dialogs;
 using Verse;
 
 namespace TheForce_Standalone.Apprenticeship
@@ -10,7 +10,7 @@ namespace TheForce_Standalone.Apprenticeship
         public int ticksSinceLastXPGain;
         private int xpGainInterval;
         private const int ApplyBondCooldown = 60000; // 1 in-game day
-        private int ticksSinceLastBondAttempt;
+        public int ticksSinceLastBondAttempt;
 
         public override string Label => "Force.Apprentice_Label".Translate(base.Label, master?.LabelShort ?? "Force.Apprentice_UnknownMaster".Translate());
 

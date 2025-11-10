@@ -10,7 +10,7 @@ namespace TheForce_Standalone.Darkside.SithSorcery
     {
         public string cachedAnimalTexPath;
         public Vector2 cachedDrawSize = Vector2.one;
-        public Color animalColor = new Color(0.4f, 0.4f, 0.4f, .3f);
+        public Color animalColor = new Color(0.4f, 0.4f, 0.4f, .7f);
 
         public Graphic CachedAnimalGraphic { get; private set; }
 
@@ -102,7 +102,7 @@ namespace TheForce_Standalone.Darkside.SithSorcery
         public static List<PawnKindDef> GetValidAnimalKinds()
         {
             return DefDatabase<PawnKindDef>.AllDefs
-                .Where(k => 
+                .Where(k => !k.RaceProps.IsAnomalyEntity &&
                            k.lifeStages?.Any(ls => ls.bodyGraphicData != null) == true)
                 .ToList();
         }

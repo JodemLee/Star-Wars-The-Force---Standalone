@@ -22,7 +22,7 @@ namespace TheForce_Standalone.Darkside.SithSorcery
                 SithMat = new Material(ShaderDatabase.MoteGlowDistorted)
                 {
                     mainTexture = sithLightningTexture,
-                    color = Color.red 
+                    color = Color.red
                 };
             }
             else
@@ -60,7 +60,7 @@ namespace TheForce_Standalone.Darkside.SithSorcery
             SoundDef explosionSound = SoundDefOf.Thunder_OnMap ?? SoundDefOf.FlashstormAmbience;
             if (!strikeLoc.Fogged(map))
             {
-                GenExplosion.DoExplosion(strikeLoc, map, 1.9f, ForceDefOf.Force_Lightning, null, explosionSound :explosionSound );
+                GenExplosion.DoExplosion(strikeLoc, map, 1.9f, ForceDefOf.Force_Lightning, null, explosionSound: explosionSound);
                 Vector3 loc = strikeLoc.ToVector3Shifted();
                 for (int i = 0; i < 4; i++)
                 {
@@ -82,4 +82,4 @@ namespace TheForce_Standalone.Darkside.SithSorcery
         }
     }
 }
-   
+

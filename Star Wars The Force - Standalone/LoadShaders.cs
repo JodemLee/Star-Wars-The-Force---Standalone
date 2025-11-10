@@ -11,11 +11,11 @@ namespace TheForce_Standalone
     {
         private static AssetBundle _bundleInt;
         private static Dictionary<string, Shader> _lookupShaders;
-        private const string _rootPathUnlit = "Assets/Shader/";
+        private const string _rootPathUnlit = "Assets/Data/lee.theforce.standalone/Materials/Shaders/";
 
         // thing specific (ideally lol)
         public static readonly Shader ForceVoidShader = LoadShader(Path.Combine(_rootPathUnlit, "ForceVoidShader.shader"));
-
+        public static readonly Shader GhostVoidShader = LoadShader(Path.Combine(_rootPathUnlit, "GhostShader.shader"));
         public static AssetBundle ForceBundle
         {
             get
@@ -42,27 +42,18 @@ namespace TheForce_Standalone
         private static Shader LoadShader(string shaderName)
         {
             _lookupShaders ??= new Dictionary<string, Shader>();
-            try
+            if (!_lookupShaders.ContainsKey(shaderName))
             {
-                if (!_lookupShaders.ContainsKey(shaderName))
-                {
-                    _lookupShaders[shaderName] = ForceBundle.LoadAsset<Shader>(shaderName);
-                }
+                _lookupShaders[shaderName] = ForceBundle.LoadAsset<Shader>(shaderName);
+            }
 
-                Shader shader = _lookupShaders[shaderName];
-                if (shader == null)
-                {
-                    throw new Exception($"Shader '{shaderName}' " +
-                                        $"is null after loading.");
-                }
-                return shader;
-            }
-            catch (Exception ex)
+            Shader shader = _lookupShaders[shaderName];
+            if (shader == null)
             {
-                Log.Warning($"Failed to load shader: {shaderName}. " +
-                              $"Exception: {ex.Message}");
-                return ShaderDatabase.DefaultShader;
+                throw new Exception($"Shader '{shaderName}' " +
+                                    $"is null after loading.");
             }
+            return shader;
         }
     }
 

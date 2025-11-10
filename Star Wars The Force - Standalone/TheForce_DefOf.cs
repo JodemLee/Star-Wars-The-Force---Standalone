@@ -30,7 +30,7 @@ namespace TheForce_Standalone
         public static HediffDef Force_Ghost;
         public static HediffDef Force_SithGhost;
         public static HediffDef Force_SithZombie;
-
+        public static HediffDef Force_ProtectionBubble;
 
         public static ThingDef Force_ThrownPawnPush;
         public static ThingDef Force_ThrownPawnWave;
@@ -55,7 +55,10 @@ namespace TheForce_Standalone
         public static PawnKindDef Force_DarksideWraith;
         public static ThingDef Force_DarksideWraithRace;
 
+        public static IncidentDef Ambush;
 
+        public static RecordDef Force_DarksideActions;
+        public static RecordDef Force_LightsideActions;
 
         [MayRequireBiotech]
         public static HediffDef Force_MechuLinkImplant;
@@ -67,6 +70,10 @@ namespace TheForce_Standalone
         public static HediffDef Force_MechuTuneOverclocking;
         [MayRequireBiotech]
         public static PawnKindDef Force_Mech_Inquisitor;
+
+        public static HediffDef Force_SithRitualDrainEssence;
+
+
 
     }
 }

@@ -66,6 +66,7 @@ namespace TheForce_Standalone
                 }
                 else if (thrownThing is Pawn pawn)
                 {
+                    position = Vector3.Lerp(origin, destCell.ToVector3(), DistanceCoveredFraction);
                     if (pawn.Drawer?.renderer == null) return;
                     Rot4 rotation = pawn.Rotation;
                     var parms = new PawnDrawParms

@@ -1,4 +1,5 @@
 ﻿using RimWorld;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -89,25 +90,60 @@ namespace TheForce_Standalone.Generic
         public override void Apply(LocalTargetInfo target, LocalTargetInfo dest)
         {
             base.Apply(target, dest);
-            if (TryResist(target.Pawn))
+
+            // Get all pawns in the effect radius around the target
+            List<Pawn> affectedPawns = new List<Pawn>();
+            float effectRadius = parent.def.EffectRadius;
+
+            if (effectRadius > 0)
             {
-                MoteMaker.ThrowText(target.Pawn.DrawPos, target.Pawn.Map, "Force.MindTrick_Resisted".Translate());
-                return;
+                foreach (IntVec3 cell in GenRadial.RadialCellsAround(target.Cell, effectRadius, true))
+                {
+                    if (cell.InBounds(parent.pawn.Map))
+                    {
+                        // Get all pawns in each cell
+                        List<Thing> things = cell.GetThingList(parent.pawn.Map);
+                        foreach (Thing thing in things)
+                        {
+                            if (thing is Pawn pawn && pawn != parent.pawn && !affectedPawns.Contains(pawn))
+                            {
+                                affectedPawns.Add(pawn);
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                if (target.Thing is Pawn singlePawn)
+                {
+                    affectedPawns.Add(singlePawn);
+                }
             }
 
-            if (target.Thing is Pawn pawn)
+            // If caster is selected, open multi-target selection window
+            if (Find.Selector.IsSelected(parent.pawn))
             {
-                if (Find.Selector.IsSelected(parent.pawn))
+                Find.WindowStack.Add(new Window_MultiJobSelector(affectedPawns, this));
+                return; // Stop here, let the window handle the assignments
+            }
+
+            foreach (Pawn pawn in affectedPawns)
+            {
+                if (TryResist(pawn))
                 {
-                    Find.WindowStack.Add(new Window_JobSelector(pawn, this));
+                    MoteMaker.ThrowText(pawn.DrawPos, pawn.Map, "Force.MindTrick_Resisted".Translate());
+                    continue;
                 }
-                else if (Props.availableJobs.Count > 0)
+
+                if (Props.availableJobs.Count > 0)
                 {
                     MindControlJob randomJob = Props.availableJobs.RandomElement();
                     AssignJob(randomJob, pawn);
                 }
             }
         }
+
 
         protected virtual bool TryResist(Pawn pawn)
         {
@@ -164,7 +200,7 @@ namespace TheForce_Standalone.Generic
             forcePause = true;
 
             float height = Mathf.Min(600f, 100f + (compAbilityEffect.Props.availableJobs.Count * 45f));
-            windowRect = new Rect(
+            windowRect = new(
                 (UI.screenWidth - 500f) / 2f,
                 (UI.screenHeight - height) / 2f,
                 500f,
@@ -175,11 +211,11 @@ namespace TheForce_Standalone.Generic
         public override void DoWindowContents(Rect inRect)
         {
             Text.Font = GameFont.Medium;
-            Rect titleRect = new Rect(inRect.x, inRect.y, inRect.width, 35f);
+            Rect titleRect = new(inRect.x, inRect.y, inRect.width, 35f);
             Widgets.Label(titleRect, "Force.MindTrick_WindowTitle".Translate(targetPawn.LabelShortCap));
             Text.Font = GameFont.Small;
 
-            Rect contentRect = new Rect(inRect.x, titleRect.yMax + 10f, inRect.width, inRect.height - titleRect.height - 10f - CloseButSize.y);
+            Rect contentRect = new(inRect.x, titleRect.yMax + 10f, inRect.width, inRect.height - titleRect.height - 10f - CloseButSize.y);
             Widgets.DrawBoxSolid(contentRect, new Color(0.1f, 0.1f, 0.1f, 0.5f));
             totalJobHeight = 0f;
             foreach (var job in compAbilityEffect.Props.availableJobs)
@@ -195,7 +231,7 @@ namespace TheForce_Standalone.Generic
                 }
             }
 
-            Rect viewRect = new Rect(0f, 0f, contentRect.width - 16f, totalJobHeight);
+            Rect viewRect = new(0f, 0f, contentRect.width - 16f, totalJobHeight);
             Widgets.BeginScrollView(contentRect, ref scrollPosition, viewRect);
 
             float currentY = 0f;
@@ -203,7 +239,7 @@ namespace TheForce_Standalone.Generic
             {
                 if (job?.jobDef == null) continue;
 
-                Rect jobRect = new Rect(0f, currentY, viewRect.width, 30f);
+                Rect jobRect = new(0f, currentY, viewRect.width, 30f);
                 string label = job.labelOverride ?? job.jobDef.LabelCap;
                 if (Widgets.ButtonText(jobRect, label))
                 {
@@ -215,7 +251,7 @@ namespace TheForce_Standalone.Generic
                 if (!job.description.NullOrEmpty())
                 {
                     float descHeight = Text.CalcHeight(job.description, viewRect.width - 30f);
-                    Rect descRect = new Rect(15f, currentY, viewRect.width - 30f, descHeight);
+                    Rect descRect = new(15f, currentY, viewRect.width - 30f, descHeight);
                     Widgets.Label(descRect, job.description);
                     currentY += descHeight;
                 }
@@ -224,6 +260,128 @@ namespace TheForce_Standalone.Generic
             }
 
             Widgets.EndScrollView();
+        }
+    }
+
+    public class Window_MultiJobSelector : Window
+    {
+        private readonly List<Pawn> targetPawns;
+        private readonly CompAbilityEffect_MindTrick compAbilityEffect;
+        private Vector2 scrollPosition;
+        private MindControlJob selectedJob;
+
+        public Window_MultiJobSelector(List<Pawn> targetPawns, CompAbilityEffect_MindTrick compAbilityEffect)
+        {
+            this.targetPawns = targetPawns;
+            this.compAbilityEffect = compAbilityEffect;
+            closeOnAccept = false;
+            closeOnCancel = true;
+            doCloseButton = true;
+            doWindowBackground = true;
+            absorbInputAroundWindow = true;
+            forcePause = true;
+
+            windowRect = new(
+                (UI.screenWidth - 600f) / 2f,
+                (UI.screenHeight - 400f) / 2f,
+                600f,
+                400f
+            );
+        }
+
+        public override void DoWindowContents(Rect inRect)
+        {
+            Text.Font = GameFont.Medium;
+            Widgets.Label(new(inRect.x, inRect.y, inRect.width, 35f),
+                "Force.MindTrick_MultiTargetTitle".Translate(targetPawns.Count));
+            Text.Font = GameFont.Small;
+
+            // Job selection
+            Rect jobSelectionRect = new(inRect.x, inRect.y + 40f, inRect.width, 30f);
+            if (Widgets.ButtonText(jobSelectionRect, selectedJob?.labelOverride ?? "Force.MindTrick_SelectJob".Translate()))
+            {
+                Find.WindowStack.Add(new Window_JobSelectionMenu(this));
+            }
+
+            // Target list
+            Rect targetsRect = new(inRect.x, inRect.y + 80f, inRect.width, inRect.height - 120f);
+            Widgets.DrawBoxSolid(targetsRect, new Color(0.1f, 0.1f, 0.1f, 0.5f));
+
+            float contentHeight = targetPawns.Count * 30f;
+            Rect viewRect = new(0f, 0f, targetsRect.width - 16f, contentHeight);
+
+            Widgets.BeginScrollView(targetsRect, ref scrollPosition, viewRect);
+
+            float currentY = 0f;
+            foreach (Pawn pawn in targetPawns)
+            {
+                Rect pawnRect = new(0f, currentY, viewRect.width, 30f);
+                Widgets.Label(pawnRect, pawn.LabelShortCap);
+                currentY += 30f;
+            }
+
+            Widgets.EndScrollView();
+
+            // Apply button
+            Rect applyButtonRect = new(inRect.x, inRect.yMax - 125f, inRect.width, 30f);
+            if (selectedJob != null && Widgets.ButtonText(applyButtonRect, "Force.MindTrick_ApplyToAll".Translate()))
+            {
+                ApplyToAll();
+                Close();
+            }
+        }
+
+        private void ApplyToAll()
+        {
+            foreach (Pawn pawn in targetPawns)
+            {
+                compAbilityEffect.AssignJob(selectedJob, pawn);
+            }
+        }
+
+        public void SetSelectedJob(MindControlJob job)
+        {
+            selectedJob = job;
+        }
+
+        private class Window_JobSelectionMenu : Window
+        {
+            private readonly Window_MultiJobSelector parentWindow;
+
+            public Window_JobSelectionMenu(Window_MultiJobSelector parentWindow)
+            {
+                this.parentWindow = parentWindow;
+                closeOnAccept = false;
+                closeOnCancel = true;
+                doWindowBackground = true;
+                absorbInputAroundWindow = true;
+
+                windowRect = new(
+                    (UI.screenWidth - 300f) / 2f,
+                    (UI.screenHeight - 300f) / 2f,
+                    300f,
+                    300f
+                );
+            }
+
+            public override void DoWindowContents(Rect inRect)
+            {
+                Widgets.Label(new(inRect.x, inRect.y, inRect.width, 30f), "Force.MindTrick_ChooseJob".Translate());
+
+                float currentY = 40f;
+                foreach (MindControlJob job in parentWindow.compAbilityEffect.Props.availableJobs)
+                {
+                    if (job?.jobDef == null) continue;
+
+                    Rect jobRect = new(inRect.x, currentY, inRect.width, 30f);
+                    if (Widgets.ButtonText(jobRect, job.labelOverride ?? job.jobDef.LabelCap))
+                    {
+                        parentWindow.SetSelectedJob(job);
+                        Close();
+                    }
+                    currentY += 35f;
+                }
+            }
         }
     }
 

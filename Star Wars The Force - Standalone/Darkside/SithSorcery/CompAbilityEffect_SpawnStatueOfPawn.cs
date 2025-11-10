@@ -1,4 +1,7 @@
-﻿using RimWorld;
+﻿using HarmonyLib;
+using RimWorld;
+using System;
+using UnityEngine;
 using Verse;
 
 namespace TheForce_Standalone.Darkside.SithSorcery
@@ -17,16 +20,14 @@ namespace TheForce_Standalone.Darkside.SithSorcery
                 Log.Error("CompAbilityEffect_SpawnStatueOfPawn applied to non-pawn target");
                 return;
             }
+            target.Pawn.jobs.posture = PawnPosture.Standing;
             Thing statue = ThingMaker.MakeThing(Props.statueDef ?? ThingDefOf.Statue, Props.statueStuffDef);
             CompStatueWithContainer comp = statue.TryGetComp<CompStatueWithContainer>();
             if (comp != null)
             {
-
                 comp.StorePawn(target.Pawn);
                 comp.JustCreatedBy(parent.pawn);
-                comp.GenerateImageDescription();    
-
-
+                comp.GenerateImageDescription();
             }
             GenPlace.TryPlaceThing(statue, target.Cell, parent.pawn.Map, ThingPlaceMode.Near);
         }
@@ -35,6 +36,7 @@ namespace TheForce_Standalone.Darkside.SithSorcery
         {
             if (!base.CanApplyOn(target, dest))
                 return false;
+
 
             return target.Pawn != null;
         }
@@ -51,3 +53,4 @@ namespace TheForce_Standalone.Darkside.SithSorcery
         }
     }
 }
+

@@ -89,13 +89,13 @@ namespace TheForce_Standalone.Darkside.SithSorcery
             Text.Font = GameFont.Medium;
             GUI.color = new Color(0.8f, 0.2f, 0.2f);
             Text.Anchor = TextAnchor.UpperCenter;
-            Widgets.Label(new Rect(0, 5f, inRect.width, 30f), "Force.SithDrain_WindowTitle".Translate());
+            Widgets.Label(new(0, 5f, inRect.width, 30f), "Force.SithDrain_WindowTitle".Translate());
             GUI.color = Color.white;
             Text.Font = GameFont.Small;
             Text.Anchor = TextAnchor.UpperLeft;
 
             // Target Info Section
-            Rect targetRect = new Rect(0, 40f, inRect.width, 30f);
+            Rect targetRect = new(0, 40f, inRect.width, 30f);
             Widgets.DrawHighlightIfMouseover(targetRect);
             Widgets.Label(targetRect, "Force.SithDrain_TargetLabel".Translate(targetPawn.LabelShortCap));
             if (Mouse.IsOver(targetRect))
@@ -105,17 +105,17 @@ namespace TheForce_Standalone.Darkside.SithSorcery
 
             // Warning Section
             GUI.color = new Color(1f, 0.9f, 0.3f);
-            Widgets.Label(new Rect(0, 70f, inRect.width, 40f), "Force.SithDrain_Warning".Translate());
+            Widgets.Label(new(0, 70f, inRect.width, 40f), "Force.SithDrain_Warning".Translate());
             GUI.color = Color.white;
 
             // Skill Selection Section
-            Rect skillSelectionOuter = new Rect(0, 110f, inRect.width, 300f);
+            Rect skillSelectionOuter = new(0, 110f, inRect.width, 300f);
             Widgets.DrawBoxSolid(skillSelectionOuter, new Color(0.1f, 0.1f, 0.1f, 0.5f));
             Rect skillSelectionInner = skillSelectionOuter.ContractedBy(5f);
 
             GUI.BeginGroup(skillSelectionInner);
-            Rect scrollOutRect = new Rect(0, 0, skillSelectionInner.width, skillSelectionInner.height);
-            Rect scrollViewRect = new Rect(0, 0, skillSelectionInner.width - 16f, DefDatabase<SkillDef>.AllDefs.Count() * 30f);
+            Rect scrollOutRect = new(0, 0, skillSelectionInner.width, skillSelectionInner.height);
+            Rect scrollViewRect = new(0, 0, skillSelectionInner.width - 16f, DefDatabase<SkillDef>.AllDefs.Count() * 30f);
 
             Widgets.BeginScrollView(scrollOutRect, ref scrollPosition, scrollViewRect);
 
@@ -125,7 +125,7 @@ namespace TheForce_Standalone.Darkside.SithSorcery
                 var skill = targetPawn.skills.GetSkill(skillDef);
                 if (skill == null || skill.TotallyDisabled) continue;
 
-                Rect rowRect = new Rect(0, y, scrollViewRect.width, 28f);
+                Rect rowRect = new(0, y, scrollViewRect.width, 28f);
                 Widgets.DrawHighlightIfMouseover(rowRect);
 
                 if (skillDef == selectedSkill)
@@ -137,9 +137,9 @@ namespace TheForce_Standalone.Darkside.SithSorcery
                 float barWidth = 120f;
                 float labelWidth = scrollViewRect.width - levelWidth - barWidth - 35f;
 
-                Widgets.Label(new Rect(35f, y, labelWidth, 28f), skillDef.LabelCap);
+                Widgets.Label(new(35f, y, labelWidth, 28f), skillDef.LabelCap);
 
-                Rect barRect = new Rect(35f + labelWidth, y + 5f, barWidth, 18f);
+                Rect barRect = new(35f + labelWidth, y + 5f, barWidth, 18f);
                 Widgets.FillableBar(barRect, skill.Level / 20f);
                 Text.Anchor = TextAnchor.MiddleCenter;
                 Widgets.Label(barRect, "Force.SithDrain_SkillLevel".Translate(skill.Level));
@@ -158,7 +158,7 @@ namespace TheForce_Standalone.Darkside.SithSorcery
             GUI.EndGroup();
 
             // Explanation Section
-            Rect explanationRect = new Rect(0, 420f, inRect.width, 80f);
+            Rect explanationRect = new(0, 420f, inRect.width, 80f);
             string explanationText = selectedSkill == null
                 ? "Force.SithDrain_SelectPrompt".Translate()
                 : GetDrainExplanationText();
@@ -170,26 +170,26 @@ namespace TheForce_Standalone.Darkside.SithSorcery
             {
                 int drainAmount = Mathf.FloorToInt(maxDrainable * drainPercentage);
 
-                Rect explanationRect2 = new Rect(0, 420f, inRect.width, 100f);
+                Rect explanationRect2 = new(0, 420f, inRect.width, 100f);
                 Widgets.Label(explanationRect2, GetDrainExplanationText());
 
                 if (drainPercentage > 0.8f && maxDrainable > 3)
                 {
-                    Rect warningRect = new Rect(0, 520f, inRect.width, 30f);
+                    Rect warningRect = new(0, 520f, inRect.width, 30f);
                     GUI.color = Color.yellow;
                     Widgets.Label(warningRect, "Force.SithDrain_HighRiskWarning".Translate());
                     GUI.color = Color.white;
                 }
 
                 drainPercentage = Widgets.HorizontalSlider(
-                    new Rect(10f, 550f, inRect.width - 20f, 30f),
+                    new(10f, 550f, inRect.width - 20f, 30f),
                     drainPercentage,
                     0f,
                     1f,
                     true,
                     roundTo: 0.1f);
 
-                Rect buttonRect = new Rect(inRect.width / 2 - 100f, 590f, 200f, 35f);
+                Rect buttonRect = new(inRect.width / 2 - 100f, 590f, 200f, 35f);
 
                 if (drainAmount > 0)
                 {

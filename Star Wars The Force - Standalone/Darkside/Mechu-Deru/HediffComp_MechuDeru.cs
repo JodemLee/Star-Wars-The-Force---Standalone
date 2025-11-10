@@ -28,10 +28,13 @@ namespace TheForce_Standalone.Darkside.Mechu_Deru
                 storedEnergy = Mathf.Clamp(value, 0, maxStoredEnergy);
                 if (storedEnergy <= 0)
                 {
-                    DestroySpawnedShields();
-                    Messages.Message("Force.MechuDeru_EnergyDepleted".Translate(),
-                                  Pawn,
-                                  MessageTypeDefOf.NegativeEvent);
+                    if (spawnedShields.Count > 0)
+                    {
+                        DestroySpawnedShields();
+                        Messages.Message("Force.MechuDeru_EnergyDepleted".Translate(),
+                                      Pawn,
+                                      MessageTypeDefOf.NegativeEvent);
+                    }
                 }
             }
         }
@@ -155,7 +158,7 @@ namespace TheForce_Standalone.Darkside.Mechu_Deru
             }
             catch (Exception ex)
             {
-                Log.Error($"Force.MechuDeru_TickError".Translate(Pawn?.LabelShort ?? "null pawn", ex));
+                Log.Error($"Force.MechuDeru_TickError {Pawn?.LabelShort ?? "null pawn"} {ex}" );
                 Unlink();
             }
         }

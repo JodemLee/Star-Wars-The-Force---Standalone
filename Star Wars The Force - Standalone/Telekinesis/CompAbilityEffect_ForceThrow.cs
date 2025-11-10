@@ -43,7 +43,6 @@ namespace TheForce_Standalone.Telekinesis
             if (parent?.pawn == null || !base.ValidateTarget(target, showMessages))
                 return false;
 
-            // Additional validation for first target selection
             if (!selectedTarget.IsValid)
             {
                 if (target.Thing is Building building && !building.def.Minifiable)

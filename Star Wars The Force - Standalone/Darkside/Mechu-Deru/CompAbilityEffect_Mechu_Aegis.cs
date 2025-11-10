@@ -25,13 +25,11 @@ namespace TheForce_Standalone.Darkside.Mechu_Deru
             {
                 if (mechanoid == null || mechanoid.health == null || mechanoid.health.hediffSet == null)
                 {
-                    Log.Warning("Invalid mechanoid encountered.");
                     continue;
                 }
 
                 if (mechanoid.health.hediffSet.HasHediff(Props.hediffDef))
                 {
-                    Log.Message($"{mechanoid.LabelShortCap} already has the hediff.");
                     continue;
                 }
 

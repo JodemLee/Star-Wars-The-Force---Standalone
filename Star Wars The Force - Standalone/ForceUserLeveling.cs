@@ -19,11 +19,20 @@ namespace TheForce_Standalone
 
         public void Initialize()
         {
+            if (parent?.Pawn == null) return;
             var forceUserExt = parent.Pawn.kindDef?.GetModExtension<ModExtension_ForceUser>();
             if (forceUserExt != null)
             {
                 parent.forceLevel += forceUserExt.forceLevelRange.RandomInRange;
             }
+            CalculateXPForNextLevel();
+        }
+
+        public void Reset()
+        {
+            // Reset experience
+            forceExperience = 0f;
+            parent.forceLevel = 1;
             CalculateXPForNextLevel();
         }
 
@@ -36,7 +45,8 @@ namespace TheForce_Standalone
         public void AddForceExperience(float amount)
         {
             if (!parent.IsValidForceUser) return;
-            forceExperience += amount * parent.parent.GetStatValueForPawn(StatDef.Named("Force_XPGain"), parent.Pawn, true);
+            var multiplier = amount * Force_ModSettings.forceXpMultiplier * parent.parent.GetStatValueForPawn(StatDef.Named("Force_XPGain"), parent.Pawn, true);
+            forceExperience += multiplier;
             CheckForLevelUp();
         }
 

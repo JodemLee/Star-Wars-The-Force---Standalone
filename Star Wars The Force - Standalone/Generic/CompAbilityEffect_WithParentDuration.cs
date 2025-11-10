@@ -86,6 +86,12 @@ namespace TheForce_Standalone
                 hediffComp_LinkWithEffect.other = other;
                 hediffComp_LinkWithEffect.drawConnection = target == parent.pawn;
             }
+            HediffComp_StunDuration hediffComp_Stun = hediff.TryGetComp<HediffComp_StunDuration>();
+            if (hediffComp_Stun != null)
+            {
+                target.stances.stunner.StunFor(GetDurationSeconds(target).SecondsToTicks(), parent.pawn);
+                hediffComp_Stun.stunTicksRemaining = target.stances.stunner.StunTicksLeft;
+            }
             target.health.AddHediff(hediff);
         }
 
@@ -125,7 +131,7 @@ namespace TheForce_Standalone
             return foundTarget;
         }
 
-       
+
 
     }
 

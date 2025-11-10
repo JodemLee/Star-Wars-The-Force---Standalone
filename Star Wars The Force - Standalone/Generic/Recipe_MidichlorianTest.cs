@@ -10,21 +10,35 @@ namespace TheForce_Standalone.Generic
     {
         public override bool AvailableOnNow(Thing thing, BodyPartRecord part = null)
         {
-            if (!base.AvailableOnNow(thing, part))
+            try
             {
-                return false;
-            }
+                if (!base.AvailableOnNow(thing, part))
+                {
+                    return false;
+                }
 
-            if (!(thing is Pawn pawn))
-            {
-                return false;
-            }
+                if (!(thing is Pawn pawn))
+                {
+                    return false;
+                }
 
-            if (pawn.story?.traits?.HasTrait(DefDatabase<TraitDef>.GetNamed("Force_NeutralSensitivity")) ?? false)
+                var forceUserComp = pawn.TryGetComp<CompClass_ForceUser>();
+                if (forceUserComp != null && forceUserComp.IsValidForceUser)
+                {
+                    return false;
+                }
+
+                if (pawn.health?.hediffSet?.GetFirstHediffOfDef(HediffDef.Named("Force_TestedMidichlorians")) != null)
+                {
+                    return false;
+                }
+                return true;
+            }
+            catch (Exception ex)
             {
+                Log.Error($"Error in {GetType().Name}.AvailableOnNow: {ex.Message}\n{ex.StackTrace}");
                 return false;
             }
-            return true;
         }
 
         public override AcceptanceReport AvailableReport(Thing thing, BodyPartRecord part = null)
@@ -111,6 +125,7 @@ namespace TheForce_Standalone.Generic
             else if (midichlorianCount < 5000)
             {
                 message += "\n\n" + "Force.MidichlorianCountTooLow".Translate();
+                pawn.health.GetOrAddHediff(HediffDef.Named("Force_TestedMidichlorians"));
             }
             else
             {

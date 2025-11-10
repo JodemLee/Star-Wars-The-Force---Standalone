@@ -1,5 +1,6 @@
 ﻿using RimWorld;
 using System.Collections.Generic;
+using TheForce_Standalone.Generic;
 using UnityEngine;
 using Verse;
 
@@ -31,33 +32,8 @@ namespace TheForce_Standalone.Abilities.Darkside
 
         private void ShowForceDrainMenu(LocalTargetInfo target)
         {
-            var pawn = parent.pawn;
-            var forceUser = pawn.GetComp<CompClass_ForceUser>();
-            if (forceUser == null) return;
-
-            List<FloatMenuOption> options = new List<FloatMenuOption>
-            {
-                new FloatMenuOption("Force.Destruction_Drain25".Translate(), () => ExecuteDestruction(target, 0.25f)),
-                new FloatMenuOption("Force.Destruction_Drain33".Translate(), () => ExecuteDestruction(target, 0.33f)),
-                new FloatMenuOption("Force.Destruction_Drain50".Translate(), () => ExecuteDestruction(target, 0.5f)),
-                new FloatMenuOption("Force.Destruction_Drain66".Translate(), () => ExecuteDestruction(target, 0.66f)),
-                new FloatMenuOption("Force.Destruction_Drain100".Translate(), () => ExecuteDestruction(target, 1f))
-            };
-
-            for (int i = 0; i < options.Count; i++)
-            {
-                float percentage = 0.25f + i * 0.16f;
-                if (percentage > 1f) percentage = 1f;
-
-                float fpToDrain = forceUser.MaxFP * percentage;
-                if (forceUser.currentFP < fpToDrain)
-                {
-                    options[i].Disabled = true;
-                    options[i].tooltip = "Force.Destruction_NotEnoughFP".Translate(pawn.LabelShort, fpToDrain);
-                }
-            }
-
-            Find.WindowStack.Add(new FloatMenu(options));
+            var menuOptions = Utility_FPCostMenu.CreateStandardPercentages(ExecuteDestruction);
+            Utility_FPCostMenu.ShowForcePercentageMenu(parent.pawn, target, menuOptions, "Force.Destruction_NotEnoughFP");
         }
 
         private void ExecuteDestruction(LocalTargetInfo target, float fpPercentage)
@@ -66,11 +42,23 @@ namespace TheForce_Standalone.Abilities.Darkside
             var forceUser = pawn.GetComp<CompClass_ForceUser>();
             if (forceUser == null) return;
 
-            float fpToDrain = forceUser.MaxFP * fpPercentage;
+            float fpToDrain;
+            if (fpPercentage >= 1f)
+            {
+                fpToDrain = forceUser.currentFP;
+            }
+            else
+            {
+                fpToDrain = forceUser.MaxFP * fpPercentage;
+            }
+
             if (!forceUser.TrySpendFP(fpToDrain)) return;
 
-            float explosionRadius = GetRadiusForPawn(fpPercentage);
-            float damageFactor = fpPercentage * 2f;
+            // Calculate actual percentage based on drained FP for explosion scaling
+            float actualPercentage = fpToDrain / forceUser.MaxFP;
+
+            float explosionRadius = GetRadiusForPawn(actualPercentage);
+            float damageFactor = actualPercentage * 2f;
             int baseDamage = Props.damageAmount == -1 ? Props.damageDef.defaultDamage : Props.damageAmount;
             int actualDamage = Mathf.RoundToInt(baseDamage * damageFactor);
             List<Thing> thingstoIgnore = new List<Thing> { this.parent.pawn };
@@ -90,7 +78,7 @@ namespace TheForce_Standalone.Abilities.Darkside
                 ignoredThings: thingstoIgnore
             );
 
-            if (fpPercentage >= 0.66f)
+            if (actualPercentage >= 0.66f)
             {
                 Messages.Message("Force.Destruction_PowerfulEffect".Translate(pawn.LabelShort),
                                 pawn, MessageTypeDefOf.NeutralEvent);

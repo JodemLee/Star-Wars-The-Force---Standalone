@@ -3,6 +3,7 @@ using RimWorld;
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
+using TheForce_Standalone.HarmonyPatches;
 using UnityEngine;
 using Verse;
 
@@ -15,10 +16,11 @@ namespace TheForce_Standalone
         public static int apprenticeCapacity = 1;
         public static bool darksideVisuals = false;
         public static float insanityChance = 1f;
-        public static bool IncreaseDarksideOnKill = false;
+        public static bool IncreaseDarksideOnKill = true;
         public static bool rankUpApprentice = false;
         public static bool rankUpMaster = false;
         public static int requiredGraduatedApprentices = 1;
+        public static int forceXpMultiplier = 1;
         public static int requiredforceLevel = 10;
 
         public override void ExposeData()
@@ -28,12 +30,12 @@ namespace TheForce_Standalone
             Scribe_Values.Look(ref usePsycastStat, "usePsycastStat");
             Scribe_Values.Look(ref apprenticeCapacity, "apprenticeCapacity", 1);
             Scribe_Values.Look(ref insanityChance, "insanityChance", 0.25f);
-            Scribe_Values.Look(ref IncreaseDarksideOnKill, "increasedarksideonkill");
             Scribe_Values.Look(ref rankUpApprentice, "rankUpApprentice", false);
             Scribe_Values.Look(ref rankUpMaster, "rankUpMaster", false);
             Scribe_Values.Look(ref requiredGraduatedApprentices, "requiredGraduatedApprentices", 1);
             Scribe_Values.Look(ref requiredforceLevel, "requiredforceLevel", 10);
             Scribe_Values.Look(ref darksideVisuals, "darksideVisuals", false);
+            Scribe_Values.Look(ref forceXpMultiplier, "forceXpMultiplier", 1);
         }
     }
 
@@ -54,10 +56,7 @@ namespace TheForce_Standalone
         {
             Force_Mod = this;
             settings = GetSettings<Force_ModSettings>();
-            var harmony = HarmonyPatches.HarmonyPatches.harmonyPatch;
-            harmony.Patch(original: AccessTools.PropertyGetter(typeof(ShaderTypeDef), nameof(ShaderTypeDef.Shader)),
-                prefix: new HarmonyMethod(typeof(TheForce_Mod),
-                    nameof(ShaderFromAssetBundle)));
+
         }
 
         public static void ShaderFromAssetBundle(ShaderTypeDef __instance, ref Shader ___shaderInt)
@@ -81,7 +80,7 @@ namespace TheForce_Standalone
                     : throw new PlatformNotSupportedException("Force.Error.UnsupportedPlatform".Translate());
 
                 string bundlePath = Path.Combine(Content.RootDir,
-                    @"AssetBundles\" + text + "\\forceshaders.assetbundle");
+                    @"Asset_Bundles\" + text + "\\force_shaders.assetbundle");
 
                 AssetBundle bundle = AssetBundle.LoadFromFile(bundlePath);
 
@@ -98,7 +97,7 @@ namespace TheForce_Standalone
         {
             Listing_Standard listingStandard = new Listing_Standard();
             listingStandard.Begin(inRect);
-            Rect tabRect = new Rect(inRect.x, inRect.y - 30f, inRect.width, 30);
+            Rect tabRect = new(inRect.x, inRect.y - 30f, inRect.width, 30);
             Rect generalTabRect = tabRect.LeftHalf().ContractedBy(4f);
             Rect projectilesTabRect = tabRect.RightHalf().ContractedBy(4f);
 
@@ -122,15 +121,11 @@ namespace TheForce_Standalone
 
         private void DrawGeneralSettings(Rect inRect)
         {
-            Rect scrollRect = new Rect(0, 0, inRect.width - 16f, 1000);
+            Rect scrollRect = new(0, 0, inRect.width - 16f, 1000);
             Widgets.BeginScrollView(inRect, ref scrollPosition, scrollRect);
 
             Listing_Standard listingStandard = new Listing_Standard();
             listingStandard.Begin(scrollRect);
-
-            listingStandard.CheckboxLabeled("Force.Settings.DarksideOnKill".Translate(),
-                ref Force_ModSettings.IncreaseDarksideOnKill,
-                "Force.Settings.DarksideOnKillDesc".Translate());
 
             listingStandard.CheckboxLabeled("Force.Settings.UsePsycastStat".Translate(),
                 ref Force_ModSettings.usePsycastStat,
@@ -144,6 +139,9 @@ namespace TheForce_Standalone
 
             listingStandard.Label("Force.Settings.ApprenticeCapacity".Translate(Force_ModSettings.apprenticeCapacity));
             Force_ModSettings.apprenticeCapacity = (int)listingStandard.Slider(Force_ModSettings.apprenticeCapacity, 1, 10);
+
+            listingStandard.Label("Force.Settings.ForceXPMultiplier".Translate(Force_ModSettings.forceXpMultiplier));
+            Force_ModSettings.forceXpMultiplier = (int)listingStandard.Slider(Force_ModSettings.forceXpMultiplier, 1, 10);
 
             listingStandard.CheckboxLabeled("Force.Settings.ApprenticeRankup".Translate(),
                 ref Force_ModSettings.rankUpApprentice,
@@ -184,7 +182,6 @@ namespace TheForce_Standalone
             Force_ModSettings.usePsycastStat = false;
             Force_ModSettings.offSetMultiplier = 3f;
             Force_ModSettings.apprenticeCapacity = 1;
-            Force_ModSettings.IncreaseDarksideOnKill = false;
             Force_ModSettings.rankUpMaster = false;
             Force_ModSettings.rankUpApprentice = false;
             Force_ModSettings.requiredGraduatedApprentices = 1;

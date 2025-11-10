@@ -1,9 +1,5 @@
 ﻿using RimWorld;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Verse;
 
 namespace TheForce_Standalone.Nightsister
@@ -52,7 +48,7 @@ namespace TheForce_Standalone.Nightsister
                 {
                     if (target.Thing is Corpse corpse)
                     {
-                       
+
                         FleckMaker.ThrowSmoke(corpse.Position.ToVector3Shifted(), corpse.Map, 1f);
                         FleckMaker.ThrowHeatGlow(corpse.Position, corpse.Map, 1f);
                     }

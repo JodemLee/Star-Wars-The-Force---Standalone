@@ -1,4 +1,5 @@
 ﻿using RimWorld;
+using UnityEngine;
 using Verse;
 
 namespace TheForce_Standalone.HediffComps
@@ -81,27 +82,31 @@ namespace TheForce_Standalone.HediffComps
 
         private void ApplyHediffIfNeeded(Pawn targetPawn)
         {
-            if (targetPawn == null || targetPawn.health == null || Props?.hediffToApply == null)
+            // Apply to the CASTER (other pawn), not the ghost (parent.pawn)
+            if (other == null || targetPawn.health == null || Props?.hediffToApply == null)
                 return;
 
             try
             {
-                if (addedHediff == null)
+                var existingHediff = targetPawn.health.hediffSet.GetFirstHediffOfDef(Props.hediffToApply);
+
+                if (existingHediff == null)
                 {
                     addedHediff = targetPawn.health.AddHediff(Props.hediffToApply);
                     if (addedHediff != null)
                     {
-                        addedHediff.Severity = parent.Severity * Props.severityFactor + Props.severityOffset;
+                        addedHediff.Severity = Props.severityOffset;
                     }
                 }
-                else if (addedHediff.pawn == targetPawn)
+                else
                 {
-                    addedHediff.Severity = parent.Severity * Props.severityFactor + Props.severityOffset;
+                    existingHediff.Severity += Props.severityOffset;
+                    addedHediff = existingHediff;
                 }
             }
             catch (System.Exception ex)
             {
-                Log.Error($"Failed to apply hediff to {targetPawn}: {ex}");
+                Log.Error($"Failed to apply hediff to caster {other}: {ex}");
                 RemoveAddedHediff();
             }
         }
@@ -110,9 +115,16 @@ namespace TheForce_Standalone.HediffComps
         {
             try
             {
+                // When link breaks, we should DECREASE severity, not remove entirely
                 if (addedHediff != null && addedHediff.pawn != null && addedHediff.pawn.health != null)
                 {
-                    addedHediff.pawn.health.RemoveHediff(addedHediff);
+                    addedHediff.Severity = Mathf.Max(0, addedHediff.Severity - Props.severityOffset);
+
+                    // Only remove if severity reaches 0
+                    if (addedHediff.Severity <= 0)
+                    {
+                        addedHediff.pawn.health.RemoveHediff(addedHediff);
+                    }
                 }
                 addedHediff = null;
             }

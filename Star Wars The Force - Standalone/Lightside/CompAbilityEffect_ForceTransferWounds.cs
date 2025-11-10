@@ -6,7 +6,7 @@ using Verse;
 
 namespace TheForce_Standalone.Lightside
 {
-    internal class CompAbilityEffect_ForceTransferWounds : CompAbilityEffect_ForcePower
+    internal class CompAbilityEffect_ForceTransferWounds : CompAbilityEffect
     {
         public override void Apply(LocalTargetInfo target, LocalTargetInfo dest)
         {
@@ -46,7 +46,7 @@ namespace TheForce_Standalone.Lightside
             {
                 try
                 {
-                    
+
                     Hediff_Injury newInjury = (Hediff_Injury)HediffMaker.MakeHediff(injury.def, pawn);
                     newInjury.Severity = injury.Severity;
                     newInjury.Part = injury.Part;
@@ -72,7 +72,7 @@ namespace TheForce_Standalone.Lightside
                 return false;
             }
 
-           
+
             if (!GetWoundsToTransfer(targetPawn).Any())
             {
                 if (throwMessages)

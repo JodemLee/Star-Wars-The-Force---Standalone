@@ -3,26 +3,54 @@ using RimWorld;
 using RimWorld.Planet;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using TheForce_Standalone.Alignment;
+using UnityEngine;
 using Verse;
 
 namespace TheForce_Standalone.HarmonyPatches
 {
+    // Add this helper class to avoid code duplication
+    public static class AlignmentRecordTracker
+    {
+        public static void IncrementAlignmentRecord(Pawn pawn, AlignmentType alignmentType)
+        {
+            if (pawn?.records == null) return;
+
+            if (alignmentType == AlignmentType.Darkside)
+            {
+                pawn.records.Increment(ForceDefOf.Force_DarksideActions);
+            }
+            else if (alignmentType == AlignmentType.Lightside)
+            {
+                pawn.records.Increment(ForceDefOf.Force_LightsideActions);
+            }
+        }
+    }
+
     [HarmonyPatch(typeof(Pawn), "Kill")]
     public static class Darkside_Patch
     {
         public static void Prefix(Pawn __instance, DamageInfo? dinfo)
         {
-            if (Force_ModSettings.IncreaseDarksideOnKill)
+            if (dinfo.HasValue && dinfo.Value.Instigator is Pawn attacker)
             {
-                if (dinfo.HasValue && dinfo.Value.Instigator is Pawn attacker)
+                if (__instance.RaceProps.Humanlike)
                 {
-                    if (__instance.RaceProps.Humanlike)
+                    if (!attacker.HostileTo(__instance.Faction))
                     {
-                        if (!attacker.HostileTo(__instance.Faction))
+                        var comp = attacker.GetComp<CompClass_ForceUser>();
+                        if (comp != null)
                         {
-                            var comp = attacker.GetComp<CompClass_ForceUser>();
-                            comp?.Alignment.AddDarkSideAttunement(0.1f);
+                            comp.Alignment.AddDarkSideAttunement(0.1f);
+                            AlignmentRecordTracker.IncrementAlignmentRecord(attacker, AlignmentType.Darkside);
+                            AlignmentActionLogger.Instance.LogAction(
+                                attacker,
+                                "Killing Non-Hostile",
+                                AlignmentType.Darkside,
+                                0.1f,
+                                "Combat"
+                            );
                         }
                     }
                 }
@@ -40,7 +68,9 @@ namespace TheForce_Standalone.HarmonyPatches
             if (newThought?.def == null || __instance?.pawn == null)
                 return;
 
-            // Check if the thought has an alignment effect
+            if (__instance.GetFirstMemoryOfDef(newThought.def) != null)
+                return;
+
             var alignmentExtension = newThought.def.GetModExtension<ThoughtAlignmentExtension>();
             if (alignmentExtension == null)
                 return;
@@ -48,14 +78,31 @@ namespace TheForce_Standalone.HarmonyPatches
             var comp = __instance.pawn.GetComp<CompClass_ForceUser>();
             if (comp == null) return;
 
-            // Apply the correct alignment based on extension
+            string thoughtName = newThought.def.LabelCap;
+
             switch (alignmentExtension.alignment)
             {
                 case AlignmentType.Darkside:
                     comp.Alignment.AddDarkSideAttunement(alignmentExtension.alignmentIncrease);
+                    AlignmentRecordTracker.IncrementAlignmentRecord(__instance.pawn, AlignmentType.Darkside);
+                    AlignmentActionLogger.Instance.LogAction(
+                        __instance.pawn,
+                        thoughtName,
+                        AlignmentType.Darkside,
+                        alignmentExtension.alignmentIncrease,
+                        "Thought"
+                    );
                     break;
                 case AlignmentType.Lightside:
                     comp.Alignment.AddLightSideAttunement(alignmentExtension.alignmentIncrease);
+                    AlignmentRecordTracker.IncrementAlignmentRecord(__instance.pawn, AlignmentType.Lightside);
+                    AlignmentActionLogger.Instance.LogAction(
+                        __instance.pawn,
+                        thoughtName,
+                        AlignmentType.Lightside,
+                        alignmentExtension.alignmentIncrease,
+                        "Thought"
+                    );
                     break;
             }
         }
@@ -66,33 +113,107 @@ namespace TheForce_Standalone.HarmonyPatches
     {
         public static void Postfix(Pawn member, DamageInfo dinfo)
         {
-            if (!Force_ModSettings.IncreaseDarksideOnKill || dinfo.Instigator is not Pawn attacker || member.HostileTo(attacker))
-            {
+            if (dinfo.Instigator == null || dinfo.Instigator.Faction == null)
                 return;
-            }
+
+            if (dinfo.Instigator is not Pawn attacker)
+                return;
+
+            if (!dinfo.Def.ExternalViolenceFor(member))
+                return;
+
+            if (member.Faction?.HostileTo(dinfo.Instigator.Faction) == true)
+                return;
+
+            if (member.InAggroMentalState ||
+                attacker.InAggroMentalState ||
+                (member.InMentalState && member.MentalStateDef.IsExtreme && member.MentalStateDef.category == MentalStateCategory.Malicious) ||
+                PrisonBreakUtility.IsPrisonBreaking(member) ||
+                member.IsQuestHelper() ||
+                SlaveRebellionUtility.IsRebelling(attacker) ||
+                member.IsSlaveOfColony)
+                return;
+
+            if (IsMutuallyHostileCrossfire(dinfo, member, attacker))
+                return;
 
             var comp = attacker.GetComp<CompClass_ForceUser>();
-            comp?.Alignment.AddDarkSideAttunement(0.01f);
+            if (comp != null)
+            {
+                float damageAmount = Mathf.Min(100f, dinfo.Amount);
+                float alignmentChange = 0.01f * (damageAmount / 100f);
+
+                comp.Alignment.AddDarkSideAttunement(alignmentChange);
+                AlignmentRecordTracker.IncrementAlignmentRecord(attacker, AlignmentType.Darkside);
+                AlignmentActionLogger.Instance.LogAction(
+                    attacker,
+                    "Harming Ally",
+                    AlignmentType.Darkside,
+                    alignmentChange,
+                    "Combat"
+                );
+            }
+        }
+
+        private static bool IsMutuallyHostileCrossfire(DamageInfo dinfo, Pawn member, Pawn attacker)
+        {
+            if (attacker.mindState?.enemyTarget != null && member.mindState?.enemyTarget != null)
+            {
+                if (attacker.mindState.enemyTarget == member.mindState.enemyTarget)
+                    return true;
+
+                // Check if both are hostile to the same faction
+                var attackerTargetFaction = attacker.mindState.enemyTarget.Faction;
+                var memberTargetFaction = member.mindState.enemyTarget.Faction;
+
+                if (attackerTargetFaction != null && memberTargetFaction != null &&
+                    attackerTargetFaction == memberTargetFaction)
+                    return true;
+            }
+
+            return false;
         }
     }
 
     [HarmonyPatch(typeof(InteractionWorker_Slight), "RandomSelectionWeight")]
     public static class InteractionWorker_Slight_RandomSelectionWeight_Patch
     {
-        public static void Postfix(Pawn initiator)
+        public static void Postfix(Pawn initiator, Pawn recipient)
         {
             var comp = initiator.GetComp<CompClass_ForceUser>();
-            comp?.Alignment.AddDarkSideAttunement(0.01f);
+            if (comp != null)
+            {
+                comp.Alignment.AddDarkSideAttunement(0.01f);
+                AlignmentRecordTracker.IncrementAlignmentRecord(initiator, AlignmentType.Darkside);
+                AlignmentActionLogger.Instance.LogAction(
+                    initiator,
+                    "Social Slight",
+                    AlignmentType.Darkside,
+                    0.01f,
+                    "Social"
+                );
+            }
         }
     }
 
     [HarmonyPatch(typeof(InteractionWorker_Insult), "RandomSelectionWeight")]
     public static class InteractionWorker_Insult_RandomSelectionWeight_Patch
     {
-        public static void Postfix(Pawn initiator)
+        public static void Postfix(Pawn initiator, Pawn recipient)
         {
             var comp = initiator.GetComp<CompClass_ForceUser>();
-            comp?.Alignment.AddDarkSideAttunement(0.01f);
+            if (comp != null)
+            {
+                comp.Alignment.AddDarkSideAttunement(0.01f);
+                AlignmentRecordTracker.IncrementAlignmentRecord(initiator, AlignmentType.Darkside);
+                AlignmentActionLogger.Instance.LogAction(
+                    initiator,
+                    "Insult",
+                    AlignmentType.Darkside,
+                    0.01f,
+                    "Social"
+                );
+            }
         }
     }
 
@@ -105,10 +226,21 @@ namespace TheForce_Standalone.HarmonyPatches
             if (doctor != null)
             {
                 float quality = TendUtility.CalculateBaseTendQuality(doctor, patient, medicine?.def);
-                float alignmentIncreaseIncrease = 0.01f * quality;
+                float alignmentIncrease = 0.01f * quality;
 
                 var comp = doctor.GetComp<CompClass_ForceUser>();
-                comp?.Alignment.AddLightSideAttunement(alignmentIncreaseIncrease);
+                if (comp != null)
+                {
+                    comp.Alignment.AddLightSideAttunement(alignmentIncrease);
+                    AlignmentRecordTracker.IncrementAlignmentRecord(doctor, AlignmentType.Lightside);
+                    AlignmentActionLogger.Instance.LogAction(
+                        doctor,
+                        "Healing",
+                        AlignmentType.Lightside,
+                        alignmentIncrease,
+                        "Medical"
+                    );
+                }
             }
         }
     }
@@ -123,11 +255,22 @@ namespace TheForce_Standalone.HarmonyPatches
             {
                 if (state == QuestState.EndedSuccess)
                 {
-                    List<Pawn> colonists = PawnsFinder.AllCaravansAndTravellingTransporters_Alive;
+                    List<Pawn> colonists = PawnsFinder.AllMapsCaravansAndTravellingTransporters_Alive_Colonists;
                     foreach (Pawn colonist in colonists)
                     {
                         var comp = colonist.GetComp<CompClass_ForceUser>();
-                        comp?.Alignment.AddLightSideAttunement(0.01f);
+                        if (comp != null)
+                        {
+                            comp.Alignment.AddLightSideAttunement(0.01f);
+                            AlignmentRecordTracker.IncrementAlignmentRecord(colonist, AlignmentType.Lightside);
+                            AlignmentActionLogger.Instance.LogAction(
+                                colonist,
+                                "Charity Quest",
+                                AlignmentType.Lightside,
+                                0.01f,
+                                "Quest"
+                            );
+                        }
                     }
                 }
             }
@@ -140,15 +283,26 @@ namespace TheForce_Standalone.HarmonyPatches
     {
         public static void Postfix(Caravan caravan)
         {
-            ModifyAlignmentOnOutcome(caravan, 0.3f);
+            ModifyAlignmentOnOutcome(caravan, 0.3f, "Peace Talks Success");
         }
 
-        private static void ModifyAlignmentOnOutcome(Caravan caravan, float alignmentIncreaseIncrease)
+        private static void ModifyAlignmentOnOutcome(Caravan caravan, float alignmentIncrease, string actionName)
         {
             foreach (Pawn pawn in caravan.PawnsListForReading)
             {
                 var comp = pawn.GetComp<CompClass_ForceUser>();
-                comp?.Alignment.AddLightSideAttunement(alignmentIncreaseIncrease);
+                if (comp != null)
+                {
+                    comp.Alignment.AddLightSideAttunement(alignmentIncrease);
+                    AlignmentRecordTracker.IncrementAlignmentRecord(pawn, AlignmentType.Lightside);
+                    AlignmentActionLogger.Instance.LogAction(
+                        pawn,
+                        actionName,
+                        AlignmentType.Lightside,
+                        alignmentIncrease,
+                        "Diplomacy"
+                    );
+                }
             }
         }
     }
@@ -159,15 +313,26 @@ namespace TheForce_Standalone.HarmonyPatches
     {
         public static void Postfix(Caravan caravan)
         {
-            ModifyAlignmentOnOutcome(caravan, 0.8f);
+            ModifyAlignmentOnOutcome(caravan, 0.8f, "Peace Talks Triumph");
         }
 
-        private static void ModifyAlignmentOnOutcome(Caravan caravan, float alignmentIncreaseIncrease)
+        private static void ModifyAlignmentOnOutcome(Caravan caravan, float alignmentIncrease, string actionName)
         {
             foreach (Pawn pawn in caravan.PawnsListForReading)
             {
                 var comp = pawn.GetComp<CompClass_ForceUser>();
-                comp?.Alignment.AddLightSideAttunement(alignmentIncreaseIncrease);
+                if (comp != null)
+                {
+                    comp.Alignment.AddLightSideAttunement(alignmentIncrease);
+                    AlignmentRecordTracker.IncrementAlignmentRecord(pawn, AlignmentType.Lightside);
+                    AlignmentActionLogger.Instance.LogAction(
+                        pawn,
+                        actionName,
+                        AlignmentType.Lightside,
+                        alignmentIncrease,
+                        "Diplomacy"
+                    );
+                }
             }
         }
     }
@@ -185,10 +350,3 @@ namespace TheForce_Standalone.HarmonyPatches
         }
     }
 }
-
-
-
-
-
-
-

@@ -1,14 +1,15 @@
 ﻿using RimWorld;
 using System;
-using TheForce_Standalone.HediffComps;
 using Verse;
 using Verse.AI;
 using Verse.AI.Group;
 
 namespace TheForce_Standalone.Darkside.SithSorcery
 {
-    internal class CompAbilityEffect_SummonWraith : CompAbilityEffect_WithParentDuration
+    internal class CompAbilityEffect_SummonWraith : CompAbilityEffect
     {
+        public new CompProperties_SummonWraith Props => props as CompProperties_SummonWraith;
+
         public override void Apply(LocalTargetInfo target, LocalTargetInfo dest)
         {
             base.Apply(target, dest);
@@ -42,14 +43,18 @@ namespace TheForce_Standalone.Darkside.SithSorcery
                     {
                         if (!forceUser.wraithAnimalTexPath.NullOrEmpty())
                         {
-                            if (ModsConfig.IdeologyActive) 
-                            { 
-                                animalComp.animalColor = forceUser.Pawn.story.favoriteColor.color;
+                            // FIX: Add null check for wraithAnimalKind
+                            if (forceUser.wraithAnimalKind != null)
+                            {
+                                animalComp.animalColor = forceUser.barColor;
                                 animalComp.animalColor.a = 0.7f;
+                                animalComp.SetAppearance(forceUser.wraithAnimalKind);
                             }
-
-
-                            animalComp.SetAppearance(forceUser.wraithAnimalKind);
+                            else
+                            {
+                                Log.Warning("Force user wraithAnimalKind is null, randomizing appearance");
+                                animalComp.RandomizeAppearance();
+                            }
                         }
                         else
                         {
@@ -59,24 +64,6 @@ namespace TheForce_Standalone.Darkside.SithSorcery
                     }
                 }
 
-                var linkComp = wraith.TryGetComp<CompSummonerDependency>();
-                if (linkComp != null)
-                {
-                    linkComp.Summoner = parent.pawn;
-                }
-                var hediff = HediffMaker.MakeHediff(ForceDefOf.Force_Phantom, wraith);
-                hediff.Severity = (GetDurationSeconds(parent.pawn));
-                if (hediff != null)
-                {
-                    HediffComp_LinkWithEffect hediffComp_Link = hediff.TryGetComp<HediffComp_LinkWithEffect>();
-                    if (hediffComp_Link != null)
-                    {
-                        hediffComp_Link.other = parent.pawn;
-                        hediffComp_Link.drawConnection = target == parent.pawn;
-                    }
-                }
-                wraith.health.AddHediff(hediff);
-
                 GenSpawn.Spawn(wraith, target.Cell, parent.pawn.Map);
 
                 foreach (TrainableDef allDef in DefDatabase<TrainableDef>.AllDefs)
@@ -84,7 +71,6 @@ namespace TheForce_Standalone.Darkside.SithSorcery
                     if (wraith.training.GetWanted(allDef))
                     {
                         wraith.training.Train(allDef, parent.pawn, complete: true);
-                        
                     }
                 }
                 foreach (TrainableDef allDef2 in DefDatabase<TrainableDef>.AllDefs)

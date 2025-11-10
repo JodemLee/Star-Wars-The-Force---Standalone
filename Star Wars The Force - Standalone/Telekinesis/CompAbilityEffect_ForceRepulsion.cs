@@ -56,12 +56,12 @@ namespace TheForce_Standalone.Telekinesis
                         ForceDefOf.Force_ThrownPawnRepulse,
                         parent.pawn.Map,
                         hitWall,
-                        hitWall ? pushBackPosition : (IntVec3?) null
+                        hitWall ? pushBackPosition : (IntVec3?)null
                     );
                 }
                 else if (thing != null)
                 {
-                    
+
                 }
             }
         }

@@ -4,7 +4,7 @@ using Verse;
 
 namespace TheForce_Standalone.Lightside
 {
-    internal class CompAbilityEffect_ForceBond : CompAbilityEffect_ForcePower
+    internal class CompAbilityEffect_ForceBond : CompAbilityEffect
     {
         public new CompProperties_ForceBond Props => (CompProperties_ForceBond)props;
 
@@ -79,7 +79,7 @@ namespace TheForce_Standalone.Lightside
             Pawn pawn = target.Pawn;
             if (pawn != null && !pawn.RaceProps.intelligence.HasFlag(Intelligence.Animal))
             {
-              return false;
+                return false;
             }
             return true;
         }

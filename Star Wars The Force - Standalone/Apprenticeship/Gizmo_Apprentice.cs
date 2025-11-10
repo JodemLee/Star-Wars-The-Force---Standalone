@@ -27,7 +27,7 @@ namespace TheForce_Standalone.Apprenticeship
 
         public override GizmoResult GizmoOnGUI(Vector2 topLeft, float maxWidth, GizmoRenderParms parms)
         {
-            Rect rect = new Rect(topLeft.x, topLeft.y, GetWidth(maxWidth), 75f);
+            Rect rect = new(topLeft.x, topLeft.y, GetWidth(maxWidth), 75f);
             Rect rect2 = rect.ContractedBy(InRectPadding);
             Widgets.DrawWindowBackground(rect);
 
@@ -47,20 +47,20 @@ namespace TheForce_Standalone.Apprenticeship
             // Labels
             Text.Font = GameFont.Small;
             Text.Anchor = TextAnchor.UpperLeft;
-            Rect labelRect = new Rect(rect2.x, rect2.y, rect2.width, 30f);
+            Rect labelRect = new(rect2.x, rect2.y, rect2.width, 30f);
             Widgets.Label(labelRect, "Force.Apprentices".Translate());
             Text.Anchor = TextAnchor.UpperRight;
             Widgets.Label(labelRect, text);
 
             // Draw bandwidth bars
-            Rect bandwidthBarRect = new Rect(rect2.x, rect2.y + 30f, rect2.width, rect2.height - 30f);
+            Rect bandwidthBarRect = new(rect2.x, rect2.y + 30f, rect2.width, rect2.height - 30f);
             float usedBandwidthRatio = (float)usedBandwidth / (float)totalBandwidth;
             float usedBandwidthWidth = bandwidthBarRect.width * usedBandwidthRatio;
 
-            Rect filledBandwidthRect = new Rect(bandwidthBarRect.x, bandwidthBarRect.y, usedBandwidthWidth, bandwidthBarRect.height);
+            Rect filledBandwidthRect = new(bandwidthBarRect.x, bandwidthBarRect.y, usedBandwidthWidth, bandwidthBarRect.height);
             Widgets.DrawRectFast(filledBandwidthRect, FilledBlockColor);
 
-            Rect emptyBandwidthRect = new Rect(bandwidthBarRect.x + usedBandwidthWidth, bandwidthBarRect.y, bandwidthBarRect.width - usedBandwidthWidth, bandwidthBarRect.height);
+            Rect emptyBandwidthRect = new(bandwidthBarRect.x + usedBandwidthWidth, bandwidthBarRect.y, bandwidthBarRect.width - usedBandwidthWidth, bandwidthBarRect.height);
             Widgets.DrawRectFast(emptyBandwidthRect, EmptyBlockColor);
 
             return new GizmoResult(GizmoState.Clear);

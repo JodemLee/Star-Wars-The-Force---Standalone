@@ -65,6 +65,12 @@ namespace TheForce_Standalone.HediffComps
 
         public ShieldState ShieldState => ticksToReset > 0 ? ShieldState.Resetting : ShieldState.Active;
 
+        public override void CompPostMake()
+        {
+            base.CompPostMake();
+            this.energy = EnergyMax;
+        }
+
         private bool ShouldDisplay
         {
             get
@@ -343,7 +349,7 @@ namespace TheForce_Standalone.HediffComps
 
         public override GizmoResult GizmoOnGUI(Vector2 topLeft, float maxWidth, GizmoRenderParms parms)
         {
-            Rect rect = new Rect(topLeft.x, topLeft.y, GetWidth(maxWidth), 75f);
+            Rect rect = new(topLeft.x, topLeft.y, GetWidth(maxWidth), 75f);
 
             Find.WindowStack.ImmediateWindow(uniqueID, rect, WindowLayer.GameUI, () =>
             {

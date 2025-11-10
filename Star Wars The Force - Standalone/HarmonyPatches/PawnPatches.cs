@@ -3,9 +3,13 @@ using RimWorld;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
+using TheForce_Standalone.Apprenticeship;
 using TheForce_Standalone.Darkside.SithSorcery;
 using TheForce_Standalone.Generic;
+using UnityEngine;
 using Verse;
+using Verse.Sound;
 
 namespace TheForce_Standalone.HarmonyPatches
 {
@@ -51,6 +55,30 @@ namespace TheForce_Standalone.HarmonyPatches
         }
     }
 
+    [HarmonyPatch(typeof(PawnBioAndNameGenerator), "FillBackstorySlotShuffled")]
+    public static class PawnBioAndNameGenerator_FillBackstorySlotShuffled_Patch
+    {
+        public static void Postfix(Pawn pawn, BackstorySlot slot)
+        {
+            try
+            {
+                if (slot == BackstorySlot.Adulthood)
+                {
+                    var childhoodExtension = pawn.story.Childhood?.GetModExtension<BackstoryModExtension>();
+                    if (childhoodExtension?.availableBackstories != null && childhoodExtension.availableBackstories.Any())
+                    {
+                        pawn.story.Adulthood = childhoodExtension.availableBackstories.RandomElement();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"Error in PawnBioAndNameGenerator.FillBackstorySlotShuffled postfix: {ex}");
+            }
+        }
+    }
+
+
     [HarmonyPatch(typeof(Ability), "PreActivate")]
     public static class PatchAbility_DisplayIconInThoughtBubbleForEnemies
     {
@@ -58,7 +86,10 @@ namespace TheForce_Standalone.HarmonyPatches
         {
             if (__instance.pawn.IsPlayerControlled || !__instance.pawn.IsPlayerControlled)
             {
-                MoteMaker.MakeThoughtBubble(__instance.pawn, __instance.def.iconPath, maintain: false);
+                if (__instance.def.iconPath != null)
+                {
+                    MoteMaker.MakeThoughtBubble(__instance.pawn, __instance.def.iconPath, maintain: false);
+                }
             }
         }
     }
@@ -191,5 +222,296 @@ namespace TheForce_Standalone.HarmonyPatches
                 }
             }
         }
+
+        [HarmonyPatch(typeof(PawnGroupMakerUtility), nameof(PawnGroupMakerUtility.GeneratePawns))]
+        public static class Patch_GeneratePawns
+        {
+            [HarmonyPostfix]
+            public static void PostfixGeneratePawns(PawnGroupMakerParms parms, ref IEnumerable<Pawn> __result)
+            {
+                if (parms.faction?.def.GetModExtension<FactionExtension_ForceUsers>()?.notRecruitable != true)
+                    return;
+
+                var pawnList = __result.ToList();
+                foreach (var pawn in pawnList)
+                {
+                    if (pawn.guest != null)
+                    {
+                        pawn.guest.Recruitable = false;
+                    }
+                }
+
+
+                __result = pawnList;
+            }
+        }
     }
+
+    [HarmonyPatch(typeof(PawnApparelGenerator), "PostProcessApparel")]
+    public static class PawnApparelGenerator_PostProcessApparel_Patch
+    {
+        [HarmonyPostfix]
+        public static void Postfix(Apparel apparel, Pawn pawn)
+        {
+            if (apparel == null || pawn == null || pawn.kindDef == null) return;
+
+            // Get the mod extension
+            var modExt = pawn.kindDef.GetModExtension<ModExtension_SyncedApparelColor>();
+            if (modExt?.colorSyncRules == null) return;
+
+            // Get all apparel that's already been processed
+            var wornApparel = pawn.apparel?.WornApparel;
+            if (wornApparel == null) return;
+
+            // Check each rule to see if the new apparel matches source criteria
+            foreach (var rule in modExt.colorSyncRules)
+            {
+                if (ApparelMatchesRule(apparel, rule, isSource: true) && rule.copyColorToTarget)
+                {
+                    // This apparel is a source, sync its stuff AND color to targets
+                    SyncStuffAndColorToTargets(pawn, rule, apparel);
+                }
+                else if (ApparelMatchesRule(apparel, rule, isSource: false))
+                {
+                    // This apparel is a target, find source and sync its stuff AND color
+                    SyncStuffAndColorFromSource(pawn, rule, apparel);
+                }
+            }
+        }
+
+        private static bool ApparelMatchesRule(Apparel apparel, ColorSyncRule rule, bool isSource)
+        {
+            if (apparel.def.apparel == null) return false;
+
+            var targetLayer = isSource ? rule.sourceLayer : rule.targetLayer;
+            var targetBodyPartGroup = isSource ? rule.sourceBodyPartGroup : rule.targetBodyPartGroup;
+
+            // Check layer match
+            bool layerMatch = targetLayer == null ||
+                             (apparel.def.apparel.layers != null &&
+                              apparel.def.apparel.layers.Contains(targetLayer));
+
+            // Check body part group match
+            bool bodyPartMatch = targetBodyPartGroup == null ||
+                                (apparel.def.apparel.bodyPartGroups != null &&
+                                 apparel.def.apparel.bodyPartGroups.Contains(targetBodyPartGroup));
+
+            return layerMatch && bodyPartMatch;
+        }
+
+        private static void SyncStuffAndColorToTargets(Pawn pawn, ColorSyncRule rule, Apparel sourceApparel)
+        {
+            if (sourceApparel.Stuff == null) return; // No stuff to sync
+
+            foreach (var targetApparel in pawn.apparel.WornApparel)
+            {
+                if (targetApparel != sourceApparel &&
+                    ApparelMatchesRule(targetApparel, rule, isSource: false))
+                {
+                    // Sync STUFF first
+                    if (targetApparel.Stuff != sourceApparel.Stuff)
+                    {
+                        targetApparel.SetStuffDirect(sourceApparel.Stuff);
+                    }
+
+                    // Sync COLOR second (will use the new stuff's color if not already set)
+                    if (targetApparel.DrawColor != sourceApparel.DrawColor)
+                    {
+                        targetApparel.SetColor(sourceApparel.DrawColor, reportFailure: false);
+                    }
+                }
+            }
+        }
+
+        private static void SyncStuffAndColorFromSource(Pawn pawn, ColorSyncRule rule, Apparel targetApparel)
+        {
+            var sourceApparel = FindSourceApparel(pawn, rule);
+            if (sourceApparel != null && sourceApparel.Stuff != null)
+            {
+                // Sync STUFF first
+                if (targetApparel.Stuff != sourceApparel.Stuff)
+                {
+                    targetApparel.SetStuffDirect(sourceApparel.Stuff);
+                }
+
+                // Sync COLOR second
+                if (targetApparel.DrawColor != sourceApparel.DrawColor)
+                {
+                    targetApparel.SetColor(sourceApparel.DrawColor, reportFailure: false);
+                }
+            }
+        }
+
+        private static Apparel FindSourceApparel(Pawn pawn, ColorSyncRule rule)
+        {
+            foreach (var apparel in pawn.apparel.WornApparel)
+            {
+                if (ApparelMatchesRule(apparel, rule, isSource: true))
+                {
+                    return apparel;
+                }
+            }
+            return null;
+        }
+    }
+
+    [HarmonyPatch(typeof(Verb_CastAbility), "TryCastShot")]
+    public static class Verb_CastAbility_TryCastShot_Patch
+    {
+        static bool Prefix(Verb_CastAbility __instance, ref bool __result)
+        {
+            try
+            {
+                Pawn targetPawn = __instance.CurrentTarget.Pawn;
+                Pawn casterPawn = __instance.CasterPawn;
+
+                if (targetPawn == null || casterPawn == null || targetPawn == casterPawn)
+                {
+                    return true;
+                }
+
+                AbilityDef abilityDef = __instance.ability.def;
+                bool abilityHandled = false;
+
+                // Process all reflection providers on the target
+                ProcessReflectionProviders(targetPawn, (source, sourceDef, extension) =>
+                {
+                    if (abilityHandled) return;
+
+                    if (extension.CanReflectAbility(abilityDef, targetPawn, casterPawn))
+                    {
+                        float reflectionChance = extension.GetReflectionChance(targetPawn);
+                        float nullificationChance = extension.GetNullificationChance(targetPawn);
+
+                        float roll = Rand.Value;
+
+                        if (roll < nullificationChance)
+                        {
+                            ShowNullificationEffect(casterPawn, targetPawn, sourceDef, extension);
+                            abilityHandled = true;
+                        }
+                        else if (roll < nullificationChance + reflectionChance)
+                        {
+                            if (ReflectAbility(__instance.ability, casterPawn, targetPawn, extension, sourceDef))
+                            {
+                                abilityHandled = true;
+                            }
+                        }
+                    }
+                });
+
+                return !abilityHandled;
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"Error in reflection patch: {ex}");
+                return true;
+            }
+        }
+
+        private static void ProcessReflectionProviders(Pawn pawn, Action<object, Def, ModExtension_AbilityReflection> processor)
+        {
+            // Check apparel
+            if (pawn.apparel != null)
+            {
+                foreach (var apparel in pawn.apparel.WornApparel)
+                {
+                    var extension = apparel.def.GetModExtension<ModExtension_AbilityReflection>();
+                    if (extension != null)
+                    {
+                        processor(apparel, apparel.def, extension);
+                    }
+                }
+            }
+
+            // Check hediffs
+            foreach (var hediff in pawn.health.hediffSet.hediffs)
+            {
+                var extension = hediff.def.GetModExtension<ModExtension_AbilityReflection>();
+                if (extension != null)
+                {
+                    processor(hediff, hediff.def, extension);
+                }
+            }
+
+            // Check genes
+            if (pawn.genes != null)
+            {
+                foreach (var gene in pawn.genes.GenesListForReading)
+                {
+                    var extension = gene.def.GetModExtension<ModExtension_AbilityReflection>();
+                    if (extension != null)
+                    {
+                        processor(gene, gene.def, extension);
+                    }
+                }
+            }
+        }
+
+        private static bool ReflectAbility(Ability originalAbility, Pawn originalCaster, Pawn reflector,
+            ModExtension_AbilityReflection extension, Def sourceDef)
+        {
+            try
+            {
+                // Create reflected ability
+                Ability reflectedAbility = new Ability(reflector, originalAbility.def);
+
+                // Show effects
+                ShowReflectionEffect(originalCaster, reflector, extension, sourceDef);
+
+                bool activationResult = reflectedAbility.Activate(new LocalTargetInfo(originalCaster), dest: default);
+                return activationResult;
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"Error reflecting ability: {ex}");
+                return false;
+            }
+        }
+
+        private static void ShowReflectionEffect(Pawn originalCaster, Pawn reflector,
+            ModExtension_AbilityReflection extension, Def sourceDef)
+        {
+            // Message with source information
+            string message = "AbilityReflected".Translate(originalCaster.LabelShort, reflector.LabelShort, sourceDef.label);
+            Messages.Message(message, new LookTargets(originalCaster, reflector), MessageTypeDefOf.NeutralEvent);
+
+            // Visual effect
+            if (extension.reflectionEffect != null)
+            {
+                Effecter effecter = extension.reflectionEffect.Spawn();
+                effecter.Trigger(new TargetInfo(reflector.PositionHeld, reflector.MapHeld),
+                               new TargetInfo(originalCaster.PositionHeld, originalCaster.MapHeld));
+                effecter.Cleanup();
+            }
+
+            // Sound
+            if (extension.reflectionSound != null)
+            {
+                extension.reflectionSound?.PlayOneShot(new TargetInfo(reflector.PositionHeld, reflector.MapHeld));
+            }
+        }
+
+        private static void ShowNullificationEffect(Pawn originalCaster, Pawn nullifier,
+            Def sourceDef, ModExtension_AbilityReflection extension)
+        {
+            string message = "AbilityNullified".Translate(originalCaster.LabelShort, nullifier.LabelShort, sourceDef.label);
+            Messages.Message(message, new LookTargets(originalCaster, nullifier), MessageTypeDefOf.NeutralEvent);
+
+            if (extension.reflectionEffect != null)
+            {
+                Effecter effecter = extension.reflectionEffect.Spawn();
+                effecter.Trigger(new TargetInfo(nullifier.PositionHeld, nullifier.MapHeld),
+                               new TargetInfo(originalCaster.PositionHeld, originalCaster.MapHeld));
+                effecter.Cleanup();
+            }
+
+            if (extension.reflectionSound != null)
+            {
+                extension.reflectionSound?.PlayOneShot(new TargetInfo(nullifier.PositionHeld, nullifier.MapHeld));
+            }
+        }
+    }
+
 }
+

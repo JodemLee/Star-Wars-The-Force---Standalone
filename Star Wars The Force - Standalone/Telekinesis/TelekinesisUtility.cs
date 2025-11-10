@@ -16,18 +16,24 @@ namespace TheForce_Standalone.Telekinesis
 
         public static IntVec3 CalculatePushPosition(IntVec3 casterPos, IntVec3 targetPos, int multiplier, Map map, out bool hitWall)
         {
+
+            int minPushDistance = 3;
+            int actualMultiplier = multiplier < minPushDistance ? minPushDistance : multiplier;
+
             IntVec3 direction = targetPos - casterPos;
             if (direction.LengthHorizontal == 0)
             {
                 hitWall = false;
-                return targetPos + new IntVec3(1, 0, 0) * multiplier;
+                return targetPos + new IntVec3(1, 0, 0) * actualMultiplier;
             }
+
             IntVec3 normalizedDirection = new IntVec3(
                 Math.Sign(direction.x),
                 0,
                 Math.Sign(direction.z)
             );
-            IntVec3 pushPos = targetPos + normalizedDirection * multiplier;
+
+            IntVec3 pushPos = targetPos + normalizedDirection * actualMultiplier;
             return ValidateFinalPosition(pushPos, casterPos, targetPos, map, out hitWall);
         }
 
@@ -212,15 +218,26 @@ namespace TheForce_Standalone.Telekinesis
             float finalDamage = CalculateKineticDamage(throwSpeed, thing);
             projectile.DamageAmount = (int)finalDamage;
             projectile.destCell = destination;
-            
+
 
             thing.DeSpawn(DestroyMode.Vanish);
-            projectile.GetDirectlyHeldThings().TryAdd(thing);
+            projectile.GetDirectlyHeldThings().TryAddOrTransfer(thing);
             projectile.Launch(caster, usedThing, thing, ProjectileHitFlags.NonTargetPawns);
+        }
 
-            Log.Message($"Launched {thing.Label} (Mass: {thing.GetStatValue(StatDefOf.Mass)}) | " +
-                       $"Speed: {throwSpeed.ToString("F1")} | " +
-                       $"Damage: {projectile.DamageAmount}");
+        public static void LaunchThingNoDespawn(Thing thing, LocalTargetInfo usedThing, IntVec3 destination, Pawn caster, ThingDef projectileDef, float baseSpeed, IntVec3 spawnPosition)
+        {
+            if (projectileDef == null || caster.Map == null)
+                return;
+
+            var projectile = (Projectile_ForceThrow)GenSpawn.Spawn(projectileDef, spawnPosition, caster.Map);
+            float throwSpeed = CalculateMassBasedSpeed(baseSpeed, thing);
+            float finalDamage = CalculateKineticDamage(throwSpeed, thing);
+            projectile.DamageAmount = (int)finalDamage;
+            projectile.destCell = destination;
+
+            projectile.GetDirectlyHeldThings().TryAddOrTransfer(thing);
+            projectile.Launch(caster, usedThing, thing, ProjectileHitFlags.NonTargetPawns);
         }
 
         public static IntVec3 normalized(this IntVec3 vec)

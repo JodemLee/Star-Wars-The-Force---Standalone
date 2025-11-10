@@ -1,4 +1,5 @@
 ﻿using RimWorld;
+using System.Linq;
 using Verse;
 
 namespace TheForce_Standalone
@@ -7,6 +8,28 @@ namespace TheForce_Standalone
     {
         protected new CompProperties_AbilityEffect_ForcePower Props =>
             (CompProperties_AbilityEffect_ForcePower)props;
+
+        public override bool ShouldHideGizmo
+        {
+            get
+            {
+                try
+                {
+                    var forceUser = parent.pawn.TryGetComp<CompClass_ForceUser>();
+                    if (forceUser != null && parent.def.HasModExtension<ForceAbilityDefExtension>() && forceUser.unlockedAbiliities.Contains(parent.def.ToString()))
+                    {
+                        bool shouldHide = !forceUser.Abilities.IsAbilityActive(parent.def.defName);
+                        return shouldHide;
+                    }
+                    return false;
+                }
+                catch
+                {
+                    return false;
+                }
+            }
+        }
+
 
         public override bool AICanTargetNow(LocalTargetInfo target)
         {
@@ -39,7 +62,7 @@ namespace TheForce_Standalone
             if (StatDef.Named("Force_AbilityForceEXP") is StatDef forceExpStat)
             {
                 float exp = parent.def.GetStatValueAbstract(forceExpStat);
-                if (exp > 0) forceUser.Leveling.AddForceExperience((int)exp);
+                if (exp >= 0) forceUser.Leveling.AddForceExperience(exp);
             }
 
             if (StatDef.Named("Force_AbilityDarksideStat") is StatDef darkStat)

@@ -111,7 +111,7 @@ namespace TheForce_Standalone.Telekinesis
                 }
 
                 float massFactor = TelekinesisUtility.CalculateKineticDamage(1f, pawn);
-                float totalDamage = Mathf.Clamp(baseDamage * massFactor, 1f, 100f); // Clamp to reasonable values
+                float totalDamage = Mathf.Clamp(baseDamage * massFactor, 1f, 25f); // Clamp to reasonable values
 
                 // Get random body part or fallback to whole body
                 BodyPartRecord hitPart = pawn.health.hediffSet.GetRandomNotMissingPart(

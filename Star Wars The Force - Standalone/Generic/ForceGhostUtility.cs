@@ -7,9 +7,12 @@ namespace TheForce_Standalone.Generic
     {
         public static Color? GetGhostColor(Pawn pawn)
         {
+            if (pawn == null || pawn.health == null)
+                return null;
+
             if (pawn.health.hediffSet.GetFirstHediffOfDef(ForceDefOf.Force_Ghost) != null)
             {
-                return new Color(150, 200, 255, 178f) / 255; 
+                return new Color(150, 200, 255, 178f) / 255;
             }
             if (pawn.health.hediffSet.GetFirstHediffOfDef(ForceDefOf.Force_SithGhost) != null)
             {

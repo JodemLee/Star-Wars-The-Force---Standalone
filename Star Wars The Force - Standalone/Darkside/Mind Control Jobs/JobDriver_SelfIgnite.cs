@@ -9,7 +9,7 @@ namespace TheForce_Standalone.Darkside.Mind_Control_Jobs
     {
         public override bool TryMakePreToilReservations(bool errorOnFailed)
         {
-            return true; 
+            return true;
         }
 
         protected override IEnumerable<Toil> MakeNewToils()

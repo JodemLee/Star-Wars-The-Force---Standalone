@@ -7,46 +7,13 @@ using System.Linq;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using TheForce_Standalone.Alignment;
+using UnityEngine;
 using Verse;
 using Verse.AI;
 
 namespace TheForce_Standalone.HarmonyPatches
 {
-    public class Base : Mod
-    {
-        public static List<ThingDef> AllMeditationSpots;
-
-        public Base(ModContentPack content) : base(content)
-        {
-            HarmonyPatches.harmonyPatch.Patch(
-                AccessTools.Method(AccessTools.FirstInner(typeof(MeditationUtility),
-                    type => type.Name.Contains("AllMeditationSpotCandidates") && typeof(IEnumerator).IsAssignableFrom(type)), "MoveNext"),
-                transpiler: new HarmonyMethod(typeof(Base), nameof(Transpiler)));
-            LongEventHandler.ExecuteWhenFinished(() =>
-            {
-                AllMeditationSpots = new List<ThingDef> { ThingDefOf.MeditationSpot };
-                foreach (var def in DefDatabase<ThingDef>.AllDefs)
-                    if (def.HasModExtension<MeditationBuilding_Alignment>())
-                        AllMeditationSpots.Add(def);
-            });
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Func<ThingDef, IEnumerable<Thing>> AllOnMapOfPawnWithDef(Pawn pawn) => def => pawn.Map.listerBuildings.AllBuildingsColonistOfDef(def);
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static IEnumerable<Thing> AllMeditationSpotsForPawn(Pawn pawn) => AllMeditationSpots.SelectMany(AllOnMapOfPawnWithDef(pawn));
-
-        public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
-        {
-            var list = instructions.ToList();
-            var info1 = AccessTools.Method(typeof(ListerBuildings), nameof(ListerBuildings.AllBuildingsColonistOfDef));
-            var idx1 = list.FindIndex(ins => ins.Calls(info1)) - 3;
-            list.RemoveRange(idx1, 4);
-            list.Insert(idx1, new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(Base), nameof(AllMeditationSpotsForPawn))));
-            return list;
-        }
-    }
+ 
     [HarmonyPatch(typeof(JobDriver_Meditate), "MeditationTick")]
     public static class Patch_JobDriver_Meditate_MeditationTick
     {
@@ -75,6 +42,7 @@ namespace TheForce_Standalone.HarmonyPatches
             }
             catch (Exception ex)
             {
+                Log.Error("$Error in MeditationTick - Force Standalone" + $"{ex}");
             }
         }
 
@@ -98,7 +66,7 @@ namespace TheForce_Standalone.HarmonyPatches
             }
 
             float amount = MeditationUtility.PsyfocusGainPerTick(pawn, focus) * 60f;
-            
+
             if (alignment.alignmenttoIncrease == AlignmentType.Darkside)
             {
                 forceUser.Alignment.AddDarkSideAttunement(amount);
@@ -171,19 +139,19 @@ namespace TheForce_Standalone.HarmonyPatches
         [HarmonyPostfix]
         public static bool Prefix(JobDriver __instance)
         {
-            
+
             if (__instance is JobDriver_Meditate)
             {
                 Pawn pawn = __instance.pawn;
 
                 if (ModsConfig.RoyaltyActive && pawn.HasPsylink)
                 {
-                    
+
                     AnimationDef meditationAnimation = DefDatabase<AnimationDef>.GetNamed("Force_FloatingMeditation", false);
 
                     if (meditationAnimation != null && pawn.Drawer.renderer.CurAnimation == meditationAnimation)
                     {
-                        
+
                         pawn.Drawer.renderer.SetAnimation(null);
                     }
                 }
@@ -191,4 +159,111 @@ namespace TheForce_Standalone.HarmonyPatches
             return true;
         }
     }
+
+    [HarmonyPatch(typeof(ThoughtWorker_PassionateWork), "CurrentStateInternal")]
+    public static class Patch_ThoughtWorker_PassionateWork
+    {
+        [HarmonyPostfix]
+        public static void Postfix(ThoughtState __result, Pawn p)
+        {
+            try
+            {
+                if (!__result.Active || p.jobs?.curDriver == null)
+                    return;
+                SkillDef activeSkill = p.jobs.curDriver.ActiveSkill;
+                if (activeSkill == null)
+                    return;
+                SkillRecord skill = p.skills?.GetSkill(activeSkill);
+                if (skill == null)
+                    return;
+                var forceUser = p.TryGetComp<CompClass_ForceUser>();
+                if (forceUser == null)
+                    return;
+                float xpAmount = CalculatePassionXP(__result, skill);
+                forceUser.Leveling.AddForceExperience(xpAmount);
+            }
+            catch (System.Exception ex)
+            {
+                Log.Error($"Error in PassionateWork postfix: {ex.Message}");
+            }
+        }
+
+        private static float CalculatePassionXP(ThoughtState thoughtState, SkillRecord skill)
+        {
+            float baseXP = 0.1f; // Base XP per tick
+            if (skill.passion == Passion.Major)
+            {
+                baseXP *= 2f;
+            }
+
+            if (thoughtState.StageIndex == 1)
+            {
+                baseXP *= 1.5f;
+            }
+
+            return baseXP;
+        }
+    }
+
+    //[HarmonyPatch(typeof(JobDriver), "DriverTick")]
+    //public static class Patch_JobDriver_Wait_Tick
+    //{
+    //    [HarmonyPrefix]
+    //    public static void Prefix(JobDriver __instance)
+    //    {
+    //        try
+    //        {
+    //            // Check if this is a Wait job and specifically the chicken dance job
+    //            if (__instance is JobDriver_Wait && __instance.job.def.defName == "Force_ChickenDance")
+    //            {
+    //                HandleDanceAnimation(__instance.pawn);
+    //            }
+    //        }
+    //        catch (Exception ex)
+    //        {
+    //            // Consider logging the exception for debugging
+    //        }
+    //    }
+
+    //    private static void HandleDanceAnimation(Pawn pawn)
+    //    {
+    //        AnimationDef danceAnimation = DefDatabase<AnimationDef>.GetNamed("Force_ChickenDance");
+    //        if (danceAnimation == null)
+    //        {
+    //            return;
+    //        }
+
+    //        if (pawn.Drawer.renderer.CurAnimation != danceAnimation)
+    //        {
+    //            pawn.Drawer.renderer.SetAnimation(danceAnimation);
+    //        }
+    //    }
+    //}
+
+    //[HarmonyPatch(typeof(JobDriver), "Cleanup")]
+    //public static class Patch_JobDriver_Notify_JobEndedChickenDance
+    //{
+    //    [HarmonyPostfix]
+    //    public static void Postfix(JobDriver __instance, JobCondition condition)
+    //    {
+    //        try
+    //        {
+    //            // Check if this is a Wait job and specifically the chicken dance job
+    //            if (__instance is JobDriver_Wait && __instance.job.def.defName == "Force_ChickenDance")
+    //            {
+    //                Pawn pawn = __instance.pawn;
+    //                AnimationDef danceAnimation = DefDatabase<AnimationDef>.GetNamed("Force_ChickenDance", false);
+
+    //                if (danceAnimation != null && pawn.Drawer.renderer.CurAnimation == danceAnimation)
+    //                {
+    //                    pawn.Drawer.renderer.SetAnimation(null);
+    //                }
+    //            }
+    //        }
+    //        catch (Exception ex)
+    //        {
+    //            // Consider logging the exception for debugging
+    //        }
+    //    }
+    //}
 }

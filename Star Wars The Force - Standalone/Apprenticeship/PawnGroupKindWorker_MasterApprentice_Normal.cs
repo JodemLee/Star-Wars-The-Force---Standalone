@@ -13,7 +13,6 @@ namespace TheForce_Standalone.Apprenticeship
             if (pawns.Count == 0)
                 return;
 
-            // First ensure all force users have their levels initialized
             InitializeforceLevels(pawns);
 
             var forceUsers = pawns.Where(p =>
@@ -27,89 +26,88 @@ namespace TheForce_Standalone.Apprenticeship
 
             var potentialMasters = forceUsers
                 .Where(p =>
-                    !p.health.hediffSet.HasHediff(ForceDefOf.Force_Master) &&
-                    p.abilities?.abilities?.Any(a => a.def == ForceDefOf.Force_Apprenticeship) == true)
+                {
+                    var comp = p.GetComp<CompClass_ForceUser>();
+                    return comp?.Apprenticeship != null &&
+                           comp.Apprenticeship.apprentices.Count < comp.Apprenticeship.apprenticeCapacity &&
+                           p.abilities?.abilities?.Any(a => a.def == ForceDefOf.Force_Apprenticeship) == true;
+                })
                 .OrderByDescending(p => p.GetComp<CompClass_ForceUser>().forceLevel)
                 .ToList();
 
-            // Check for existing masters who might have lost their ability but should keep their status
             var existingMasters = forceUsers
-                .Where(p => p.health.hediffSet.HasHediff(ForceDefOf.Force_Master))
+                .Where(p =>
+                {
+                    var comp = p.GetComp<CompClass_ForceUser>();
+                    return comp?.Apprenticeship?.apprentices?.Count > 0;
+                })
                 .ToList();
 
-            // Combine potential new masters with existing masters
             var allMasters = potentialMasters.Concat(existingMasters).Distinct().ToList();
 
             var potentialApprentices = forceUsers
-                .Where(p => !p.health.hediffSet.HasHediff(ForceDefOf.Force_Apprentice))
+                .Where(p =>
+                {
+                    var comp = p.GetComp<CompClass_ForceUser>();
+                    return comp?.Apprenticeship?.master == null;
+                })
                 .OrderBy(p => p.GetComp<CompClass_ForceUser>().forceLevel)
                 .ToList();
 
             foreach (var master in allMasters)
             {
                 var masterComp = master.GetComp<CompClass_ForceUser>();
-                if (masterComp == null) continue;
+                if (masterComp?.Apprenticeship == null) continue;
 
-                // Existing masters keep their status even if they lost the ability
-                bool isExistingMaster = master.health.hediffSet.HasHediff(ForceDefOf.Force_Master);
+                bool isExistingMaster = masterComp.Apprenticeship.apprentices.Count > 0;
                 bool hasApprenticeshipAbility = master.abilities?.abilities?.Any(a => a.def == ForceDefOf.Force_Apprenticeship) == true;
 
                 if (!isExistingMaster && !hasApprenticeshipAbility)
                     continue;
 
-                // Find apprentices at least 2 levels lower than master
                 var eligibleApprentices = potentialApprentices
                     .Where(a =>
                     {
                         var apprenticeComp = a.GetComp<CompClass_ForceUser>();
                         return apprenticeComp != null &&
-                               apprenticeComp.forceLevel <= (masterComp.forceLevel - 2);
+                               apprenticeComp.forceLevel <= (masterComp.forceLevel - 2) &&
+                               apprenticeComp.Apprenticeship.master == null;
                     })
                     .ToList();
 
                 if (eligibleApprentices.Count == 0)
                     continue;
 
-                var masterHediff = master.health.hediffSet.GetFirstHediffOfDef(ForceDefOf.Force_Master) as Hediff_Master
-                    ?? HediffMaker.MakeHediff(ForceDefOf.Force_Master, master) as Hediff_Master;
-
-                if (masterHediff == null) continue;
-
-                if (!isExistingMaster)
-                {
-                    master.health.AddHediff(masterHediff);
-                    masterHediff.ChangeApprenticeCapacitySetting(Force_ModSettings.apprenticeCapacity);
-                }
-
-                // Select closest level apprentice (but still lower level)
                 var apprentice = eligibleApprentices
                     .OrderBy(a => masterComp.forceLevel - a.GetComp<CompClass_ForceUser>().forceLevel)
                     .First();
 
                 potentialApprentices.Remove(apprentice);
 
-                // Create apprentice relationship
-                var apprenticeHediff = HediffMaker.MakeHediff(ForceDefOf.Force_Apprentice, apprentice) as Hediff_Apprentice;
-                if (apprenticeHediff != null)
+                // Set up the apprenticeship relationship
+                var apprenticeComp = apprentice.GetComp<CompClass_ForceUser>();
+                if (apprenticeComp?.Apprenticeship != null)
                 {
-                    apprenticeHediff.master = master;
-                    apprentice.health.AddHediff(apprenticeHediff);
-                    masterHediff.apprentices.Add(apprentice);
+                    masterComp.Apprenticeship.apprentices.Add(apprentice);
+                    apprenticeComp.Apprenticeship.master = master;
 
+                    // Add reciprocal relations
                     if (!master.relations.DirectRelationExists(ForceDefOf.Force_ApprenticeRelation, apprentice))
                         master.relations.AddDirectRelation(ForceDefOf.Force_ApprenticeRelation, apprentice);
 
                     if (!apprentice.relations.DirectRelationExists(ForceDefOf.Force_MasterRelation, master))
                         apprentice.relations.AddDirectRelation(ForceDefOf.Force_MasterRelation, master);
+
                 }
             }
         }
+
         private static void InitializeforceLevels(List<Pawn> pawns)
         {
             foreach (var pawn in pawns)
             {
                 var comp = pawn.TryGetComp<CompClass_ForceUser>();
-                if (comp != null && comp.IsValidForceUser && comp.forceLevel <= 0)
+                if (comp != null && comp.IsValidForceUser && comp.forceLevel <= 1)
                 {
                     var forceUserExt = pawn.kindDef?.GetModExtension<ModExtension_ForceUser>();
                     if (forceUserExt != null)
@@ -120,6 +118,56 @@ namespace TheForce_Standalone.Apprenticeship
                     }
                 }
             }
+        }
+
+        // Helper methods for backwards compatibility
+        public static bool IsMaster(Pawn pawn)
+        {
+            var comp = pawn?.GetComp<CompClass_ForceUser>();
+            return comp?.Apprenticeship?.apprentices?.Count > 0;
+        }
+
+        public static bool IsApprentice(Pawn pawn)
+        {
+            var comp = pawn?.GetComp<CompClass_ForceUser>();
+            return comp?.Apprenticeship?.master != null;
+        }
+
+        public static Pawn GetMaster(Pawn apprentice)
+        {
+            var comp = apprentice?.GetComp<CompClass_ForceUser>();
+            return comp?.Apprenticeship?.master;
+        }
+
+        public static IEnumerable<Pawn> GetApprentices(Pawn master)
+        {
+            var comp = master?.GetComp<CompClass_ForceUser>();
+            return comp?.Apprenticeship?.apprentices ?? Enumerable.Empty<Pawn>();
+        }
+
+        public static bool CanBecomeMaster(Pawn pawn)
+        {
+            var comp = pawn?.GetComp<CompClass_ForceUser>();
+            return comp?.IsValidForceUser == true &&
+                   comp.forceLevel >= 3 && // Minimum level to be a master
+                   comp.Pawn?.abilities.GetAbility(ForceDefOf.Force_Apprenticeship) != null &&
+                   (comp.Apprenticeship?.apprentices?.Count ?? 0) < (comp.Apprenticeship?.apprenticeCapacity ?? 0);
+        }
+
+        public static bool CanBecomeApprentice(Pawn pawn, Pawn potentialMaster = null)
+        {
+            var comp = pawn?.GetComp<CompClass_ForceUser>();
+            if (comp?.IsValidForceUser != true || comp.Apprenticeship?.master != null)
+                return false;
+
+            if (potentialMaster != null)
+            {
+                var masterComp = potentialMaster.GetComp<CompClass_ForceUser>();
+                return masterComp?.forceLevel > comp.forceLevel + 1 && // Master should be at least 2 levels higher
+                       (masterComp.Apprenticeship?.apprentices?.Count ?? 0) < (masterComp.Apprenticeship?.apprenticeCapacity ?? 0);
+            }
+
+            return true;
         }
     }
 
@@ -141,5 +189,6 @@ namespace TheForce_Standalone.Apprenticeship
     public class FactionExtension_ForceUsers : DefModExtension
     {
         public bool enableMasterApprenticeSystem = true;
+        public bool notRecruitable = false;
     }
 }

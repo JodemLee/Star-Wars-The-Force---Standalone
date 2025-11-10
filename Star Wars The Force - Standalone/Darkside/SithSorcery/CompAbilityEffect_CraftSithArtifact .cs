@@ -236,14 +236,14 @@ namespace TheForce_Standalone.Darkside.SithSorcery
             List<ThingDef> artifacts = compEffect.GetCraftableArtifactsForTarget(targetThing);
             if (artifacts.NullOrEmpty())
             {
-                Widgets.Label(new Rect(inRect.x, inRect.y + 30f, inRect.width, 30f), "No artifacts available for this target.");
+                Widgets.Label(new(inRect.x, inRect.y + 30f, inRect.width, 30f), "No artifacts available for this target.");
                 return;
             }
 
             float viewHeight = artifacts.Sum(a => 150f + Text.CalcHeight(a.description, inRect.width - 120f));
-            Rect viewRect = new Rect(0f, 0f, inRect.width - 16f, viewHeight);
+            Rect viewRect = new(0f, 0f, inRect.width - 16f, viewHeight);
 
-            Widgets.BeginScrollView(new Rect(inRect.x, inRect.y + 60f, inRect.width, inRect.height - 100f),
+            Widgets.BeginScrollView(new(inRect.x, inRect.y + 60f, inRect.width, inRect.height - 100f),
                 ref scrollPosition, viewRect);
 
             float y = 0f;
@@ -253,7 +253,7 @@ namespace TheForce_Standalone.Darkside.SithSorcery
                 float fpCost = Mathf.Clamp(artifactValue * CompAbilityEffect_CraftSithArtifact.FPPerValue, 5f, forceUser?.MaxFP * 0.5f ?? 50f);
 
                 float height = 150f + Text.CalcHeight(def.description, viewRect.width - 120f);
-                DrawArtifactOption(new Rect(0f, y, viewRect.width, height), def, fpCost);
+                DrawArtifactOption(new(0f, y, viewRect.width, height), def, fpCost);
                 y += height;
             }
 
@@ -265,29 +265,29 @@ namespace TheForce_Standalone.Darkside.SithSorcery
             Widgets.DrawBoxSolid(rect, new Color(0.1f, 0.1f, 0.1f, 0.3f));
 
             // Icon
-            Rect iconRect = new Rect(rect.x + 10f, rect.y + 10f, 100f, 100f);
+            Rect iconRect = new(rect.x + 10f, rect.y + 10f, 100f, 100f);
             Widgets.DrawTextureFitted(iconRect, def.uiIcon, 1f);
 
             // Label
-            Rect labelRect = new Rect(iconRect.xMax + 10f, rect.y + 10f, rect.width - iconRect.width - 80f, 30f);
+            Rect labelRect = new(iconRect.xMax + 10f, rect.y + 10f, rect.width - iconRect.width - 80f, 30f);
             Widgets.Label(labelRect, def.LabelCap);
 
             // FP Cost
-            Rect fpRect = new Rect(iconRect.xMax + 10f, labelRect.yMax + 5f, rect.width - iconRect.width - 80f, 25f);
+            Rect fpRect = new(iconRect.xMax + 10f, labelRect.yMax + 5f, rect.width - iconRect.width - 80f, 25f);
             Widgets.Label(fpRect, $"FP Cost: {fpCost.ToString("F1")}");
 
             // Value
-            Rect valueRect = new Rect(iconRect.xMax + 10f, fpRect.yMax + 5f, rect.width - iconRect.width - 80f, 25f);
+            Rect valueRect = new(iconRect.xMax + 10f, fpRect.yMax + 5f, rect.width - iconRect.width - 80f, 25f);
             Widgets.Label(valueRect, $"Value: {def.BaseMarketValue.ToString()}");
 
             // Description
             Text.WordWrap = true;
-            Rect descRect = new Rect(iconRect.xMax + 10f, valueRect.yMax + 5f, rect.width - iconRect.width - 20f,
+            Rect descRect = new(iconRect.xMax + 10f, valueRect.yMax + 5f, rect.width - iconRect.width - 20f,
                 Text.CalcHeight(def.description, rect.width - iconRect.width - 20f));
             Widgets.Label(descRect, def.description);
 
             // Craft button
-            Rect buttonRect = new Rect(rect.xMax - 70f, rect.yMax - 40f, 60f, 30f);
+            Rect buttonRect = new(rect.xMax - 70f, rect.yMax - 40f, 60f, 30f);
             bool canAfford = compEffect.parent.pawn.GetComp<CompClass_ForceUser>()?.currentFP >= fpCost;
 
             GUI.color = canAfford ? Color.white : Color.gray;

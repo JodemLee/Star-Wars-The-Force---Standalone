@@ -132,7 +132,7 @@ namespace TheForce_Standalone.Apprenticeship.Ritual
                 {
                     studentXPGain = Mathf.Min(studentXPGain, extension.maxXP);
                 }
-                text += "\n" + "Force_LectureOutcomeXPGainedStudents".Translate(studentXPGain.ToString("F1"), totalPresence - 1);
+                text += "\n" + "Force.LectureOutcomeXPGainedStudents".Translate(studentXPGain.ToString("F1"), totalPresence - 1);
 
                 // Teacher info
                 var organizerComp = jobRitual.Organizer.TryGetComp<CompClass_ForceUser>();
@@ -145,7 +145,7 @@ namespace TheForce_Standalone.Apprenticeship.Ritual
                     {
                         teacherXPGain = Mathf.Min(teacherXPGain, extension.maxTeacherXP);
                     }
-                    text += "\n" + "Force_LectureOutcomeXPGainedTeacher".Translate(teacherXPGain.ToString("F1"));
+                    text += "\n" + "Force.LectureOutcomeXPGainedTeacher".Translate(teacherXPGain.ToString("F1"));
                 }
             }
 

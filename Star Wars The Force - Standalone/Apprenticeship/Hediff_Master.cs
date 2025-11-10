@@ -8,10 +8,10 @@ namespace TheForce_Standalone.Apprenticeship
     internal class Hediff_Master : HediffWithComps
     {
         public HashSet<Pawn> apprentices = new HashSet<Pawn>();
-        public int apprenticeCapacity = Force_ModSettings.apprenticeCapacity;
+        public int apprenticeCapacity => Force_ModSettings.apprenticeCapacity;
         public int graduatedApprenticesCount = 0;
         private Gizmo_Apprentice apprenticeGizmo;
-        private bool hasBackstoryChanged = false;
+        public bool hasBackstoryChanged = false;
 
         public override string Label
         {
@@ -45,7 +45,7 @@ namespace TheForce_Standalone.Apprenticeship
         {
             base.ExposeData();
             Scribe_Collections.Look(ref apprentices, "apprentices", LookMode.Reference);
-            Scribe_Values.Look(ref apprenticeCapacity, "apprenticeCapacity", Force_ModSettings.apprenticeCapacity);
+            Scribe_Values.Look(ref graduatedApprenticesCount, "graduatedApprenticesCount", 0); // Added this line
             Scribe_Values.Look(ref hasBackstoryChanged, "hasBackstoryChanged", false);
         }
 
@@ -94,7 +94,6 @@ namespace TheForce_Standalone.Apprenticeship
             apprentices.Clear();
         }
 
-
         public void ChangeApprenticeCapacitySetting(int newCapacity)
         {
             Force_ModSettings.apprenticeCapacity = newCapacity; // Update the setting
@@ -118,8 +117,7 @@ namespace TheForce_Standalone.Apprenticeship
 
         public void UpdateApprenticeCapacity(int newCapacity)
         {
-            apprenticeCapacity = newCapacity; // Update the capacity
-            apprenticeGizmo = null; // Invalidate the gizmo to force a refresh next time
+            apprenticeGizmo = null;
         }
     }
 }

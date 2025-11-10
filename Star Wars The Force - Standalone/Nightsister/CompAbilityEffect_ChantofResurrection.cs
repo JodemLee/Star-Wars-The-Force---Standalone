@@ -1,19 +1,18 @@
 ﻿using RimWorld;
+using UnityEngine.UIElements;
 using Verse;
 
 namespace TheForce_Standalone.Nightsister
 {
-    internal class CompAbilityEffect_ChantofResurrection : CompAbilityEffect
+    internal class CompAbilityEffect_ChantofResurrection : CompAbilityEffect_Resurrect
     {
         public new CompProperties_ChantofResurrection Props => (CompProperties_ChantofResurrection)props;
 
         public override void Apply(LocalTargetInfo target, LocalTargetInfo dest)
         {
             base.Apply(target, dest);
-            var corpse = (Corpse)target.Thing;
-            var soul = SkyfallerMaker.MakeSkyfaller(ForceDefOf.Force_NightsisterSoulIchor) as SoulIchor;
-            soul.target = corpse;
-            GenPlace.TryPlaceThing(soul, corpse.Position, corpse.Map, ThingPlaceMode.Direct);
+            var effecter = new Effecter(ForceDefOf.Force_Magick_Entry);
+            effecter.Trigger(new TargetInfo(target.Cell, target.Pawn.Map, true), TargetInfo.Invalid);
         }
 
         public override bool Valid(LocalTargetInfo target, bool throwMessages = false)
@@ -46,18 +45,6 @@ namespace TheForce_Standalone.Nightsister
         {
             var pawn = target.InnerPawn;
             var hediffs = pawn.health.hediffSet.hediffs;
-            for (var i = hediffs.Count - 1; i >= 0; i--)
-            {
-                var hediff = hediffs[i];
-                if (hediff is Hediff_MissingPart hediff_MissingPart)
-                {
-                    var part = hediff_MissingPart.Part;
-                    pawn.health.RemoveHediff(hediff);
-                    pawn.health.RestorePart(part);
-                }
-                else if (!hediff.def.isBad && !(hediff is Hediff_Addiction) && hediff.def.everCurableByItem)
-                    pawn.health.RemoveHediff(hediff);
-            }
 
             if (ResurrectionUtility.TryResurrectWithSideEffects(pawn))
             {

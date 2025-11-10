@@ -16,8 +16,13 @@ namespace TheForce_Standalone.Apprenticeship
             if (!IsValidMasterApprenticePair(initiator, recipient))
                 return 0f;
 
-            int levelDifference = initiator.GetComp<CompClass_ForceUser>().forceLevel -
-                                recipient.GetComp<CompClass_ForceUser>().forceLevel;
+            var initiatorComp = initiator.GetComp<CompClass_ForceUser>();
+            var recipientComp = recipient.GetComp<CompClass_ForceUser>();
+
+            if (initiatorComp == null || recipientComp == null)
+                return 0f;
+
+            int levelDifference = initiatorComp.forceLevel - recipientComp.forceLevel;
 
             return Mathf.Clamp(0.1f * levelDifference, 0.05f, 0.8f);
         }
@@ -27,11 +32,21 @@ namespace TheForce_Standalone.Apprenticeship
         {
             base.Interacted(initiator, recipient, extraSentencePacks, out letterText, out letterLabel, out letterDef, out lookTargets);
 
-            int levelDifference = initiator.GetComp<CompClass_ForceUser>().forceLevel -
-                                recipient.GetComp<CompClass_ForceUser>().forceLevel;
+            var initiatorComp = initiator.GetComp<CompClass_ForceUser>();
+            var recipientComp = recipient.GetComp<CompClass_ForceUser>();
 
+            if (initiatorComp == null || recipientComp == null)
+            {
+                letterLabel = "Force.Teaching_FailedTitle".Translate();
+                letterText = "Force.Teaching_FailedText".Translate(initiator.LabelShort, recipient.LabelShort);
+                letterDef = LetterDefOf.NegativeEvent;
+                lookTargets = new LookTargets(initiator, recipient);
+                return;
+            }
+
+            int levelDifference = initiatorComp.forceLevel - recipientComp.forceLevel;
             int xpGain = BaseXP * levelDifference;
-            recipient.GetComp<CompClass_ForceUser>().Leveling.AddForceExperience(xpGain);
+            recipientComp.Leveling.AddForceExperience(xpGain);
 
             bool learnedAbility = false;
             AbilityDef learnedAbilityDef = null;
@@ -69,22 +84,31 @@ namespace TheForce_Standalone.Apprenticeship
 
         private AbilityDef TryTeachRandomAbility(Pawn master, Pawn apprentice)
         {
-            var masterAbilities = master.abilities?.abilities;
-            var apprenticeAbilities = apprentice.abilities?.abilities;
+            var masterForceUser = master.GetComp<CompClass_ForceUser>();
+            var apprenticeForceUser = apprentice.GetComp<CompClass_ForceUser>();
 
-            if (masterAbilities == null || apprenticeAbilities == null)
+            if (masterForceUser == null || apprenticeForceUser == null)
                 return null;
 
-            var teachableAbilities = masterAbilities
-                .Where(a => a.def.comps.Any(c => c.compClass == typeof(CompAbilityEffect_ForcePower)))
-                .Where(a => !apprenticeAbilities.Any(appAbility => appAbility.def == a.def))
+            var masterUnlockedAbilities = masterForceUser.unlockedAbiliities
+                .Select(defName => DefDatabase<AbilityDef>.GetNamedSilentFail(defName))
+                .Where(def => def != null && def.comps.Any(c => c.compClass == typeof(CompAbilityEffect_ForcePower)))
+                .ToList();
+
+            if (masterUnlockedAbilities.Count == 0)
+                return null;
+
+            var teachableAbilities = masterUnlockedAbilities
+                .Where(masterAbility => !apprenticeForceUser.unlockedAbiliities.Contains(masterAbility.defName))
                 .ToList();
 
             if (teachableAbilities.Count == 0)
                 return null;
 
-            var abilityToLearn = teachableAbilities.RandomElement().def;
-            apprentice.abilities.GainAbility(abilityToLearn);
+            var abilityToLearn = teachableAbilities.RandomElement();
+            apprenticeForceUser.unlockedAbiliities.Add(abilityToLearn.defName);
+            apprenticeForceUser.Abilities.UpdatePawnAbilities();
+            apprenticeForceUser.Abilities.OnAbilityUnlocked(abilityToLearn.defName);
 
             Messages.Message("Force.Teaching_AbilityLearned".Translate(
                 apprentice.LabelShort,
@@ -96,14 +120,15 @@ namespace TheForce_Standalone.Apprenticeship
 
         private bool IsValidMasterApprenticePair(Pawn initiator, Pawn recipient)
         {
-            var masterHediff = initiator.health?.hediffSet?.GetFirstHediffOfDef(ForceDefOf.Force_Master) as Hediff_Master;
-            if (masterHediff == null) return false;
+            var initiatorComp = initiator.GetComp<CompClass_ForceUser>();
+            var recipientComp = recipient.GetComp<CompClass_ForceUser>();
 
-            var apprenticeHediff = recipient.health?.hediffSet?.GetFirstHediffOfDef(ForceDefOf.Force_Apprentice) as Hediff_Apprentice;
+            if (initiatorComp?.Apprenticeship == null || recipientComp?.Apprenticeship == null)
+                return false;
 
-            return apprenticeHediff != null
-                && masterHediff.apprentices.Contains(recipient)
-                && apprenticeHediff.master == initiator;
+            // Check if initiator is master of recipient
+            return initiatorComp.Apprenticeship.apprentices.Contains(recipient) &&
+                   recipientComp.Apprenticeship.master == initiator;
         }
     }
 }

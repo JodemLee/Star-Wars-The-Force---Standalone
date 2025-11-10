@@ -17,6 +17,13 @@ namespace TheForce_Standalone
         private Color? originalHairColor;
         private Dictionary<Apparel, Color> originalApparelColors = new Dictionary<Apparel, Color>();
 
+        public void Reset()
+        {
+            // Reset ghost mechanics if needed
+            LinkedObject = null;
+        }
+
+
         public Thing LinkedObject
         {
             get => linkedObject;
@@ -101,7 +108,7 @@ namespace TheForce_Standalone
                         };
                     }
 
-                    if(parent.Alignment.DarkSideAttunement >= 100)
+                    if (parent.Alignment.DarkSideAttunement >= 100)
                     {
                         yield return new Command_Action
                         {
@@ -264,13 +271,25 @@ namespace TheForce_Standalone
             LinkedObject = null;
         }
 
+        public bool ShouldBecomeGhostOnDeath()
+        {
+            if (parent?.Pawn == null) return false;
+            bool hasHighDarkSide = parent.Alignment.DarkSideAttunement >= 100;
+            bool hasHighLightSide = parent.Alignment.LightSideAttunement >= 100;
+
+            return hasHighDarkSide || hasHighLightSide;
+        }
+
         public bool TryReturnAsGhost(HediffDef ghostHediffDef, float severity)
         {
             if (parent.Pawn == null || parent.Pawn.health == null || parent.Pawn.health.hediffSet.HasHediff(ghostHediffDef))
                 return false;
             StoreOriginalColors();
 
-            ResurrectionUtility.TryResurrect(parent.Pawn);
+            if (parent.Pawn.Dead)
+            {
+                ResurrectionUtility.TryResurrect(parent.Pawn);
+            }
             Hediff ghostHediff = HediffMaker.MakeHediff(ghostHediffDef, parent.Pawn);
             ghostHediff.Severity = severity;
             parent.Pawn.health.AddHediff(ghostHediff);
